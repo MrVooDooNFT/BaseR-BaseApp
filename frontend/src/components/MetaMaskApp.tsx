@@ -731,30 +731,44 @@ export default function MetaMaskApp() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cloneCount">{t('farming.cloneCount')}</Label>
-                  <Input
-                    id="cloneCount"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={cloneCount}
-                    onChange={(e) => setCloneCount(parseInt(e.target.value) || 1)}
-                    disabled={isProcessing}
-                    className="w-full"
-                  />
+<Label htmlFor="cloneCount">{t('farming.cloneCount')}</Label>
+<div id="cloneCount" className="mt-2 flex items-center gap-3">
+  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+    <label key={n} className="inline-flex items-center">
+      <input
+        type="radio"
+        name="cloneCount"
+        value={n}
+        checked={cloneCount === n}
+        onChange={() => setCloneCount(n)}
+        className="appearance-none w-3.5 h-3.5 rounded-full bg-gray-300 cursor-pointer checked:bg-blue-600 transition-colors"
+        disabled={isProcessing}
+      />
+      <span className="sr-only">{n}</span>
+    </label>
+  ))}
+</div>
+
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pingsPerClone">{t('farming.pingsPerClone')}</Label>
-                  <Input
-                    id="pingsPerClone"
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={pingsPerClone}
-                    onChange={(e) => setPingsPerClone(parseInt(e.target.value) || 1)}
-                    disabled={isProcessing}
-                    className="w-full"
-                  />
+<Label htmlFor="pingsPerClone">{t('farming.pingsPerClone')}</Label>
+<div id="pingsPerClone" className="mt-2 flex items-center gap-2 flex-wrap">
+  {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+    <label key={n} className="inline-flex items-center">
+      <input
+        type="radio"
+        name="pingsPerClone"
+        value={n}
+        checked={pingsPerClone === n}
+        onChange={() => setPingsPerClone(n)}
+        className="appearance-none w-3 h-3 rounded-full bg-gray-300 cursor-pointer checked:bg-green-600 transition-colors"
+        disabled={isProcessing}
+      />
+      <span className="sr-only">{n}</span>
+    </label>
+  ))}
+</div>
+
                 </div>
 
                 {/* Advanced Settings */}
