@@ -271,7 +271,7 @@ export default function NFTMintSection({
       <CardContent className="space-y-4">
         <div className="flex justify-center mb-6">
           <img 
-            src="/assets/nft.jpg" 
+            src="https://mrvoodoonft.github.io/BaseR-Source/assets/nft.jpg" 
             alt="NFT Collection" 
             className="w-[25vw] min-w-[150px] max-w-[300px] h-auto rounded-lg shadow-md"
           />
