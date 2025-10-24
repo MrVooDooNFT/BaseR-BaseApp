@@ -1,7 +1,4 @@
-// frontend/postcss.config.js
+// Tailwind v4 — PostCSS eklentisi ayrı pakette
 module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
+  plugins: [require('@tailwindcss/postcss')],
 };
