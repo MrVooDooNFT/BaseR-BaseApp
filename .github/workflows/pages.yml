@@ -18,6 +18,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,6 +39,7 @@ jobs:
           npm install tailwindcss@3.4.13 postcss autoprefixer
           npm install @tailwindcss/typography @tailwindcss/forms @tailwindcss/aspect-ratio @tailwindcss/line-clamp
           npm install @tailwindcss/container-queries
+          npm install tailwindcss-animate
           npm install react react-dom
           npm install @tanstack/react-query @tanstack/react-query-devtools
           npm install next-themes sonner lucide-react
