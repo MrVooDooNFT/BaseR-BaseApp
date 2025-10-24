@@ -19,8 +19,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -28,11 +31,12 @@ jobs:
         working-directory: frontend
         run: npm install
 
-      - name: Ensure build deps
+      - name: Ensure build deps (Vite + Tailwind + UI libs)
         working-directory: frontend
         run: |
+          npm install vite @vitejs/plugin-react typescript @types/react @types/react-dom
+          npm install tailwindcss postcss autoprefixer
           npm install react react-dom
-          npm install -D vite @vitejs/plugin-react typescript @types/react @types/react-dom
           npm install @tanstack/react-query @tanstack/react-query-devtools
           npm install next-themes sonner lucide-react
 
