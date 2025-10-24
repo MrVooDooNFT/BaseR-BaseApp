@@ -1,4 +1,4 @@
-name: Deploy Frontend to GitHub Pages
+name: Build & Deploy Vite (frontend) to GitHub Pages
 on:
   push:
     branches: [main]
@@ -9,7 +9,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -19,19 +19,23 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+      - name: (SPA) 404 fallback
+        run: cp frontend/dist/index.html frontend/dist/404.html || true
+      - uses: actions/configure-pages@v5
         with:
           enablement: true
-
-      - name: Upload site files
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./frontend
-
-      - name: Deploy to GitHub Pages
-        id: deployment
+          path: frontend/dist
+      - id: deployment
         uses: actions/deploy-pages@v4
