@@ -34,7 +34,7 @@ jobs:
           npm install react react-dom
           npm install -D vite @vitejs/plugin-react typescript @types/react @types/react-dom
           npm install @tanstack/react-query @tanstack/react-query-devtools
-          npm install next-themes
+          npm install next-themes sonner
 
       - name: Build project
         working-directory: frontend
