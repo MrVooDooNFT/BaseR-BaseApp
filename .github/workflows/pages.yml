@@ -28,9 +28,12 @@ jobs:
         working-directory: frontend
         run: npm install
 
-      - name: Ensure Vite (and React plugin)
+      - name: Ensure Vite & React deps
         working-directory: frontend
-        run: npm install -D vite @vitejs/plugin-react
+        run: |
+          npm install -D vite @vitejs/plugin-react
+          npm install react react-dom
+          npm install -D typescript @types/react @types/react-dom
 
       - name: Build project
         working-directory: frontend
