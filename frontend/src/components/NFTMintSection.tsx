@@ -290,23 +290,25 @@ export default function NFTMintSection({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="nft-amount">{t('nft.amount')}</Label>
-          <Select
-            value={amount}
-            onValueChange={setAmount}
-            disabled={isMinting}
-          >
-            <SelectTrigger id="nft-amount" className="w-full">
-              <SelectValue placeholder={t('nft.amountPlaceholder')} />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                <SelectItem key={num} value={num.toString()}>
-                  {num}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+<Label htmlFor="nft-amount">{t('nft.amount')}</Label>
+<div id="nft-amount" className="mt-2 flex items-center gap-3">
+  {Array.from({ length: 10 }, (_, i) => (i + 1)).map((n) => (
+    <label key={n} className="inline-flex items-center">
+      <input
+        type="radio"
+        name="nft-amount"
+        value={n}
+        checked={Number(amount) === n}
+        onChange={() => setAmount(String(n))}
+        className="appearance-none w-3.5 h-3.5 rounded-full bg-gray-300 cursor-pointer
+                   checked:bg-blue-600 transition-colors"
+        disabled={isMinting}
+      />
+      <span className="sr-only">{n}</span>
+    </label>
+  ))}
+</div>
+
         </div>
         <Button 
           onClick={mintNFTCollection}
