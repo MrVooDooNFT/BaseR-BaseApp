@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.625rem;
+        --background: 0.98 0.02 240;
+        --foreground: 0.15 0.02 240;
+        --card: 1 0 0;
+        --card-foreground: 0.15 0.02 240;
+        --popover: 1 0 0;
+        --popover-foreground: 0.15 0.02 240;
+        --primary: 0.55 0.18 240;
+        --primary-foreground: 0.98 0.02 240;
+        --secondary: 0.96 0.02 240;
+        --secondary-foreground: 0.25 0.02 240;
+        --muted: 0.96 0.02 240;
+        --muted-foreground: 0.55 0.02 240;
+        --accent: 0.94 0.03 240;
+        --accent-foreground: 0.25 0.02 240;
+        --destructive: 0.65 0.25 15;
+        --destructive-foreground: 0.98 0.02 240;
+        --border: 0.92 0.02 240;
+        --input: 0.92 0.02 240;
+        --ring: 0.55 0.18 240;
+        --chart-1: 0.65 0.22 210;
+        --chart-2: 0.60 0.18 180;
+        --chart-3: 0.70 0.15 150;
+        --chart-4: 0.75 0.20 120;
+        --chart-5: 0.80 0.18 90;
+        --sidebar: 0.98 0.02 240;
+        --sidebar-foreground: 0.15 0.02 240;
+        --sidebar-primary: 0.55 0.18 240;
+        --sidebar-primary-foreground: 0.98 0.02 240;
+        --sidebar-accent: 0.96 0.02 240;
+        --sidebar-accent-foreground: 0.25 0.02 240;
+        --sidebar-border: 0.92 0.02 240;
+        --sidebar-ring: 0.55 0.18 240;
+    }
+
+    .dark {
+        --background: 0.12 0.02 240;
+        --foreground: 0.95 0.02 240;
+        --card: 0.18 0.02 240;
+        --card-foreground: 0.95 0.02 240;
+        --popover: 0.22 0.02 240;
+        --popover-foreground: 0.95 0.02 240;
+        --primary: 0.75 0.15 240;
+        --primary-foreground: 0.12 0.02 240;
+        --secondary: 0.25 0.02 240;
+        --secondary-foreground: 0.95 0.02 240;
+        --muted: 0.25 0.02 240;
+        --muted-foreground: 0.65 0.02 240;
+        --accent: 0.35 0.02 240;
+        --accent-foreground: 0.95 0.02 240;
+        --destructive: 0.70 0.22 15;
+        --destructive-foreground: 0.12 0.02 240;
+        --border: 0.95 0.02 240 / 15%;
+        --input: 0.95 0.02 240 / 20%;
+        --ring: 0.65 0.15 240;
+        --chart-1: 0.55 0.25 270;
+        --chart-2: 0.65 0.20 180;
+        --chart-3: 0.75 0.18 90;
+        --chart-4: 0.60 0.28 300;
+        --chart-5: 0.70 0.22 30;
+        --sidebar: 0.18 0.02 240;
+        --sidebar-foreground: 0.95 0.02 240;
+        --sidebar-primary: 0.55 0.25 270;
+        --sidebar-primary-foreground: 0.95 0.02 240;
+        --sidebar-accent: 0.25 0.02 240;
+        --sidebar-accent-foreground: 0.95 0.02 240;
+        --sidebar-border: 0.95 0.02 240 / 15%;
+        --sidebar-ring: 0.45 0.15 240;
+    }
+
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+}
+
+/* Custom scrollbar for logs */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: oklch(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--muted-foreground) / 0.5);
+}
+
+/* Ethereum-themed gradient backgrounds */
+.ethereum-gradient {
+    background: linear-gradient(135deg, #627eea 0%, #8b5cf6 100%);
+}
+
+.success-gradient {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.error-gradient {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
