@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import * as React from 'react'
 
 export interface CollapsibleProps {
@@ -54,5 +53,3 @@ export function CollapsibleContent({
   if (!isOpen) return null
   return <div className="p-3 border-t">{children}</div>
 }
-
-export { Collapsible, CollapsibleTrigger, CollapsibleContent };
