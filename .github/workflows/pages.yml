@@ -2,13 +2,16 @@ name: Deploy Frontend to GitHub Pages
 on:
   push:
     branches: [main]
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: 'pages'
   cancel-in-progress: true
+
 jobs:
   deploy:
     environment:
@@ -16,10 +19,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload site files
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./frontend
-      - id: deployment
+
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
