@@ -23,13 +23,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install
+      - name: Install dependencies
         working-directory: frontend
-        run: npm ci
-      - name: Build
+        run: npm install
+      - name: Build project
         working-directory: frontend
         run: npm run build
-      - name: (SPA) 404 fallback
+      - name: Add 404 fallback
         run: cp frontend/dist/index.html frontend/dist/404.html || true
       - uses: actions/configure-pages@v5
         with:
