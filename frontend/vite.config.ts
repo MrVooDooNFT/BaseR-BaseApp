@@ -7,9 +7,5 @@ const isVercel = process.env.VERCEL === '1'
 export default defineConfig({
   plugins: [react()],
   base: isVercel ? '/' : '/BaseR-BaseApp/',
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  }
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } }
 })
