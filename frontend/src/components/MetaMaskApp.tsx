@@ -1,3 +1,4 @@
+// src/components/MetaMaskApp.tsx
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,97 +6,21 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Wallet, Play, Square, Trash2, Heart, AlertTriangle, Network, Settings, ChevronDown, ChevronUp, Rocket, Zap, Target, ExternalLink, Info, Languages } from 'lucide-react';
+import { Wallet, Play, Square, Trash2, Heart, AlertTriangle, Settings, ChevronDown, ChevronUp, Rocket, Zap, Info, Languages, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { useActor } from '../hooks/useActor';
-import { useLogs, useClearLogs } from '../hooks/useQueries';
-import { Web3Provider } from '../lib/web3';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import WalletStats from './WalletStats';
 import NFTMintSection from './NFTMintSection';
 import { useLanguage } from '../contexts/LanguageContext';
+import { createWalletClient, viemConnector } from '@farcaster/auth-client';
 
-// Base Network Configuration
-const BASE_NETWORK = {
-  chainId: '0x2105', // 8453 in hex
-  chainName: 'Base',
-  nativeCurrency: {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-  rpcUrls: ['https://mainnet.base.org'],
-  blockExplorerUrls: ['https://basescan.org'],
-};
-
-// Fixed Factory contract address
-const FACTORY_ADDR = '0x0ae36d90d4e295a4b87274eec0c1520fd5f6f842';
-
-// Factory ABI exactly as specified
-const FACTORY_ABI = [
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "Cloned",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "createClone",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  }
-];
-
-// Pinger contract ABI
-const PINGER_ABI = [
-  {
-    "inputs": [],
-    "name": "ping",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "counter",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-// Pinger contract bytecode
-const PINGER_BYTECODE = "0x608060405234801561001057600080fd5b50600080819055506101a8806100276000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80635c36b1861461003b57806361bc221a14610045575b600080fd5b610043610063565b005b61004d610078565b60405161005a9190610087565b60405180910390f35b600160008082825461007591906100a2565b92505081905550565b60008054905090565b6000819050919050565b61009a8161007e565b82525050565b60006100ab8261007e565b91506100b68361007e565b92508282019050808211156100ce576100cd6100f8565b5b92915050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fdfea2646970667358221220a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890123464736f6c63430008130033";
-
-// Helper function to filter only function definitions from ABI
-const getFunctionABI = (abi: any[]) => {
-  return abi.filter(item => item.type === 'function');
-};
+// Farcaster Auth client
+const farcasterClient = createWalletClient({
+  relay: 'https://relay.farcaster.xyz',
+  ethereum: viemConnector({ rpcUrl: 'https://mainnet.base.org' })
+});
 
 interface LogEntry {
   id: string;
@@ -115,20 +40,20 @@ interface AdvancedSettings {
 
 export default function MetaMaskApp() {
   const { t, language, setLanguage } = useLanguage();
-  const [account, setAccount] = useState<string>('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [currentChainId, setCurrentChainId] = useState<string>('');
-  const [isOnBaseNetwork, setIsOnBaseNetwork] = useState(false);
+
+  // Farcaster auth state
+  const [fcSignedIn, setFcSignedIn] = useState(false);
+  const [fid, setFid] = useState<number | null>(null);
+  const [username, setUsername] = useState<string>('');
+  const [custodyAddress, setCustodyAddress] = useState<`0x${string}` | ''>('');
+
+  // App states kept for UI continuity
   const [cloneCount, setCloneCount] = useState<number>(1);
   const [pingsPerClone, setPingsPerClone] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [web3Provider, setWeb3Provider] = useState<Web3Provider | null>(null);
-  const [createdClones, setCreatedClones] = useState<string[]>([]);
-  const [deployedPingers, setDeployedPingers] = useState<string[]>([]);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [connectedWallet, setConnectedWallet] = useState<string>('');
 
   const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
     gasMode: 'wallet',
@@ -139,454 +64,107 @@ export default function MetaMaskApp() {
     gasBuffer: 20
   });
 
-  const { actor } = useActor();
-  const { data: backendLogs, refetch: refetchLogs } = useLogs();
-  const clearLogsMutation = useClearLogs();
-
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
     const now = new Date();
-    const logEntry: LogEntry = {
-      id: Date.now().toString(),
-      timestamp: now.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit' 
-      }),
-      message,
-      type
-    };
-    setLogs(prev => [...prev, logEntry]);
-    
-    if (actor) {
-      const fullTimestamp = now.toLocaleString('en-US');
-      actor.addLog(`[${fullTimestamp}] [${type.toUpperCase()}] ${message}`).catch(console.error);
-    }
+    setLogs(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        timestamp: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        message,
+        type
+      }
+    ]);
   };
 
   const clearLogs = async () => {
+    setLogs([]);
+    addLog('Logs cleared', 'info');
+    toast.success(t('toast.logsCleared') || 'Logs cleared');
+  };
+
+  async function signInWithFarcaster() {
     try {
-      setLogs([]);
-      setCreatedClones([]);
-      setDeployedPingers([]);
-      
-      if (actor) {
-        await clearLogsMutation.mutateAsync();
-        await refetchLogs();
+      if (!custodyAddress || !custodyAddress.startsWith('0x') || custodyAddress.length !== 42) {
+        toast.error('Geçerli custody adresi gir');
+        return;
       }
-      
-      addLog('Logs cleared', 'info');
-      toast.success(t('toast.logsCleared'));
-    } catch (error) {
-      console.error('Error clearing logs:', error);
-      addLog('Error clearing logs', 'error');
-      toast.error(t('toast.logsClearFailed'));
-    }
-  };
 
-  const detectWallet = () => {
-    if (typeof window.ethereum !== 'undefined') {
-      if (window.ethereum.isMetaMask) {
-        return 'MetaMask';
-      } else if (window.ethereum.isRabby) {
-        return 'Rabby';
-      } else if (window.ethereum.isWalletConnect) {
-        return 'WalletConnect';
-      } else {
-        return 'Unknown Wallet';
+      // Bu iki değer daha sonra .env veya server’dan gelecek
+      const authKey = 'YOUR_FARCASTER_AUTH_KEY';
+      const channelToken = 'YOUR_CHANNEL_TOKEN';
+
+      const userFid = fid ?? 383612; // varsayılan senin FID
+      const { message, isError, error } = farcasterClient.buildSignInMessage({
+        address: custodyAddress,
+        fid: userFid,
+        uri: window.location.origin + '/login',
+        domain: window.location.hostname,
+        nonce: Math.random().toString(36).slice(2, 12)
+      });
+
+      if (isError || !message) {
+        throw error ?? new Error('SIWF build failed');
       }
-    }
-    return null;
-  };
 
-  const checkWallet = () => {
-    if (typeof window.ethereum !== 'undefined') {
-      return true;
-    }
-    toast.error(t('toast.noWallet'));
-    addLog('No compatible wallet found', 'error');
-    return false;
-  };
+      // İlk aşama: kullanıcıya mesajı dış cüzdanıyla imzalat
+      // Metamask kaldırıldı. Şimdilik clipboard’a kopyalatıyoruz.
+      await navigator.clipboard.writeText(message);
+      toast.info('Mesaj panoya kopyalandı. Dış cüzdanınla imzayı al ve imzayı gir.');
 
-  const checkNetwork = async (provider: Web3Provider) => {
-    try {
-      const chainId = await provider.getChainId();
-      setCurrentChainId(chainId);
-      const isBase = chainId === BASE_NETWORK.chainId;
-      setIsOnBaseNetwork(isBase);
-      
-      if (isBase) {
-        addLog('Successfully connected to Base network', 'success');
-      } else {
-        addLog(`Wrong network detected (Chain ID: ${chainId}). Please switch to Base network.`, 'warning');
+      const signature = prompt('İmzayı 0x ile yapıştır') as `0x${string}`;
+      if (!signature || !signature.startsWith('0x')) {
+        toast.error('İmza gerekli');
+        return;
       }
-      
-      return isBase;
-    } catch (error: any) {
-      addLog(`Network check error: ${error.message}`, 'error');
-      return false;
-    }
-  };
 
-  const switchToBaseNetwork = async () => {
-    if (!web3Provider || !window.ethereum) return;
+      const res = await farcasterClient.authenticate({
+        authKey,
+        channelToken,
+        message,
+        signature,
+        authMethod: 'authAddress',
+        fid: userFid,
+        username,
+        bio: '',
+        displayName: '',
+        pfpUrl: ''
+      });
 
-    try {
-      addLog('Initiating switch to Base network...', 'info');
-      
-      await web3Provider.switchNetwork(BASE_NETWORK.chainId);
-      addLog('Successfully switched to Base network', 'success');
-      toast.success(t('toast.networkSwitched'));
-      
-      await checkNetwork(web3Provider);
-    } catch (switchError: any) {
-      if (switchError.code === 4902) {
-        try {
-          addLog('Adding Base network to wallet...', 'info');
-          await web3Provider.addNetwork(BASE_NETWORK);
-          addLog('Base network successfully added and activated', 'success');
-          toast.success(t('toast.networkSwitched'));
-          
-          await checkNetwork(web3Provider);
-        } catch (addError: any) {
-          addLog(`Error adding Base network: ${addError.message}`, 'error');
-          toast.error(t('toast.networkSwitchFailed'));
-        }
-      } else {
-        addLog(`Network switch error: ${switchError.message}`, 'error');
-        toast.error(t('toast.networkSwitchFailed'));
+      if (res.isError || res.data?.state !== 'completed') {
+        throw res.error ?? new Error('Auth failed');
       }
+
+      setFcSignedIn(true);
+      setFid(res.data.fid ?? userFid);
+      addLog('Farcaster sign-in completed', 'success');
+      toast.success('Farcaster oturumu açıldı');
+    } catch (e: any) {
+      addLog(`Farcaster sign-in error: ${e?.message || e}`, 'error');
+      toast.error('Farcaster oturumu açılamadı');
     }
-  };
+  }
 
-  const connectWallet = async () => {
-    if (!checkWallet()) return;
+  function signOutFarcaster() {
+    setFcSignedIn(false);
+    setFid(null);
+    setUsername('');
+    addLog('Signed out from Farcaster', 'info');
+  }
 
-    try {
-      const walletType = detectWallet();
-      addLog(`Connecting to ${walletType}...`, 'info');
-      
-      const provider = new Web3Provider(window.ethereum!);
-      
-      const accounts = await provider.requestAccounts();
-      
-      if (accounts.length > 0) {
-        setAccount(accounts[0]);
-        setIsConnected(true);
-        setWeb3Provider(provider);
-        setConnectedWallet(walletType || 'Unknown');
-        
-        addLog(t('wallet.connected'), 'success');
-        addLog(`Factory contract address: ${FACTORY_ADDR}`, 'info');
-        
-        const createCloneSelector = provider.getFunctionSelector('createClone');
-        addLog(`createClone function selector: ${createCloneSelector}`, 'info');
-        
-        if (createCloneSelector === '0x64f2d4b9') {
-          addLog('✓ createClone function selector verified (0x64f2d4b9)', 'success');
-        } else {
-          addLog(`⚠ createClone function selector is not expected value! Expected: 0x64f2d4b9, Found: ${createCloneSelector}`, 'warning');
-        }
-        
-        toast.success(t('toast.walletConnected'));
-        
-        await checkNetwork(provider);
-      }
-    } catch (error: any) {
-      addLog(`Wallet connection error: ${error.message}`, 'error');
-      toast.error('Wallet connection failed!');
-    }
-  };
-
-  const disconnectWallet = () => {
-    setAccount('');
-    setIsConnected(false);
-    setCurrentChainId('');
-    setIsOnBaseNetwork(false);
-    setWeb3Provider(null);
-    setCreatedClones([]);
-    setDeployedPingers([]);
-    setConnectedWallet('');
-    addLog('Wallet disconnected', 'info');
-    toast.info(t('toast.walletDisconnected'));
-  };
-
+  // Geçici stublar: zincir işlemleri Farcaster akışına taşınana kadar pasif
   const deployRealPinger = async () => {
-    if (!web3Provider || !isConnected) {
-      toast.error(t('toast.connectWalletFirst'));
-      return;
-    }
-
-    if (!isOnBaseNetwork) {
-      toast.error(t('toast.switchToBase'));
-      return;
-    }
-
-    setIsDeploying(true);
-    addLog('Deploying real Pinger contract...', 'info');
-    addLog(`Deploying on Base network (Chain ID: ${BASE_NETWORK.chainId})`, 'info');
-    addLog(`Gas mode: ${advancedSettings.gasMode === 'wallet' ? 'Wallet suggested' : 'Custom'}`, 'info');
-
-    try {
-      const gasParams = await calculateGasParams('deploy', 500000);
-      
-      const deployTxHash = await web3Provider.deployContract(
-        PINGER_ABI,
-        PINGER_BYTECODE,
-        [],
-        gasParams
-      );
-      
-      addLog(`Deployment transaction sent to blockchain: ${deployTxHash}`, 'info');
-      
-      const deployReceipt = await web3Provider.waitForTransaction(deployTxHash);
-      
-      if (deployReceipt.status === '0x1' && deployReceipt.contractAddress) {
-        const contractAddress = deployReceipt.contractAddress;
-        setDeployedPingers(prev => [...prev, contractAddress]);
-        
-        addLog(`✓ Real Pinger contract successfully deployed: ${contractAddress}`, 'success');
-        addLog(`Block: ${parseInt(deployReceipt.blockNumber, 16)}, Gas Used: ${parseInt(deployReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-        addLog(`Transaction Hash: ${deployTxHash}`, 'info');
-        
-        toast.success(t('toast.deploySuccess'));
-      } else {
-        addLog('Deployment transaction failed', 'error');
-        toast.error(t('toast.deployFailed'));
-      }
-    } catch (error: any) {
-      addLog(`Deployment error: ${error.message}`, 'error');
-      toast.error(t('toast.deployFailed'));
-    } finally {
-      setIsDeploying(false);
-    }
+    toast.info('İşlem akışı Farcaster’a taşınacak. Şimdilik pasif.');
+    addLog('Deploy is disabled in Farcaster-only mode', 'warning');
   };
-
-  const calculateGasParams = async (methodName: string, estimatedGas?: number) => {
-    try {
-      let gasLimit = estimatedGas || (methodName === 'createClone' ? advancedSettings.minGasCreateClone : advancedSettings.minGasPing);
-      
-      if (methodName === 'deploy') {
-        gasLimit = estimatedGas || 500000;
-      }
-      
-      if (estimatedGas) {
-        gasLimit = Math.ceil(estimatedGas * (1 + advancedSettings.gasBuffer / 100));
-      }
-      
-      if (methodName === 'createClone') {
-        gasLimit = Math.max(gasLimit, advancedSettings.minGasCreateClone);
-      } else if (methodName === 'ping') {
-        gasLimit = Math.max(gasLimit, advancedSettings.minGasPing);
-      }
-
-      const gasParams: any = {
-        gasLimit
-      };
-
-      if (advancedSettings.gasMode === 'custom') {
-        gasParams.maxFeePerGas = Math.floor(advancedSettings.maxFee * 1000000000);
-        gasParams.maxPriorityFeePerGas = Math.floor(advancedSettings.priority * 1000000000);
-        
-        addLog(`Gas parameters (Custom): Gas Limit: ${gasLimit.toLocaleString()}, Max Fee: ${advancedSettings.maxFee} gwei, Priority Fee: ${advancedSettings.priority} gwei`, 'info');
-      } else {
-        addLog(`Gas parameters (Wallet suggested): Gas Limit: ${gasLimit.toLocaleString()}, fees will be suggested by wallet`, 'info');
-      }
-
-      return gasParams;
-    } catch (error: any) {
-      addLog(`Gas parameter calculation error: ${error.message}`, 'error');
-      const minGas = methodName === 'createClone' ? advancedSettings.minGasCreateClone : advancedSettings.minGasPing;
-      const gasParams: any = {
-        gasLimit: minGas
-      };
-      
-      if (advancedSettings.gasMode === 'custom') {
-        gasParams.maxFeePerGas = Math.floor(advancedSettings.maxFee * 1000000000);
-        gasParams.maxPriorityFeePerGas = Math.floor(advancedSettings.priority * 1000000000);
-      }
-      
-      return gasParams;
-    }
-  };
-
-  const extractCloneAddress = (receipt: any): string | null => {
-    try {
-      for (const log of receipt.logs) {
-        if (log.address.toLowerCase() === FACTORY_ADDR.toLowerCase()) {
-          if (log.topics && log.topics.length > 1) {
-            const cloneAddress = '0x' + log.topics[1].slice(-40);
-            return cloneAddress;
-          }
-        }
-      }
-      return null;
-    } catch (error) {
-      addLog(`Clone address extraction error: ${error}`, 'error');
-      return null;
-    }
-  };
-
   const startProcess = async () => {
-    if (!web3Provider || !isConnected) {
-      toast.error(t('toast.connectWalletFirst'));
-      return;
-    }
-
-    if (!isOnBaseNetwork) {
-      toast.error(t('toast.switchToBase'));
-      return;
-    }
-
-    setIsProcessing(true);
-    setCreatedClones([]);
-    addLog(`Starting process: ${cloneCount} clones will be created, ${pingsPerClone} pings per clone`, 'info');
-    addLog(`Factory contract address: ${FACTORY_ADDR}`, 'info');
-    addLog(`Processing on Base network (Chain ID: ${BASE_NETWORK.chainId})`, 'info');
-    addLog(`Gas mode: ${advancedSettings.gasMode === 'wallet' ? 'Wallet suggested' : 'Custom'}`, 'info');
-    
-    if (advancedSettings.gasMode === 'custom') {
-      addLog(`Using custom gas settings - Max Fee: ${advancedSettings.maxFee} gwei, Priority: ${advancedSettings.priority} gwei, Gas Buffer: ${advancedSettings.gasBuffer}%`, 'info');
-    } else {
-      addLog(`Using wallet suggested gas fees with Gas Buffer: ${advancedSettings.gasBuffer}%`, 'info');
-    }
-
-    const newClones: string[] = [];
-
-    try {
-      for (let i = 1; i <= cloneCount; i++) {
-        addLog(`Creating clone ${i}/${cloneCount}...`, 'info');
-        
-        try {
-          let estimatedGas: number | undefined;
-          try {
-            estimatedGas = await web3Provider.estimateGas(FACTORY_ADDR, getFunctionABI(FACTORY_ABI), 'createClone', []);
-            addLog(`Gas estimate for clone ${i}: ${estimatedGas.toLocaleString()}`, 'info');
-          } catch (estimateError: any) {
-            addLog(`Gas estimation failed, using minimum value: ${estimateError.message}`, 'warning');
-          }
-
-          const gasParams = await calculateGasParams('createClone', estimatedGas);
-          
-          const cloneTxHash = await web3Provider.callContract(
-            FACTORY_ADDR,
-            getFunctionABI(FACTORY_ABI),
-            'createClone',
-            [],
-            gasParams
-          );
-          addLog(`Clone ${i} transaction sent to blockchain: ${cloneTxHash}`, 'info');
-          
-          const cloneReceipt = await web3Provider.waitForTransaction(cloneTxHash);
-          if (cloneReceipt.status === '0x1') {
-            const cloneAddress = extractCloneAddress(cloneReceipt);
-            if (cloneAddress) {
-              newClones.push(cloneAddress);
-              setCreatedClones(prev => [...prev, cloneAddress]);
-              addLog(`Clone ${i} successfully created: ${cloneAddress}`, 'success');
-              addLog(`Block: ${parseInt(cloneReceipt.blockNumber, 16)}, Gas Used: ${parseInt(cloneReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-              
-              for (let j = 1; j <= pingsPerClone; j++) {
-                addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
-                
-                try {
-                  let pingEstimatedGas: number | undefined;
-                  try {
-                    pingEstimatedGas = await web3Provider.estimateGas(cloneAddress, getFunctionABI(PINGER_ABI), 'ping', []);
-                    addLog(`Gas estimate for clone ${i} - ping ${j}: ${pingEstimatedGas.toLocaleString()}`, 'info');
-                  } catch (estimateError: any) {
-                    addLog(`Ping gas estimation failed, using minimum value: ${estimateError.message}`, 'warning');
-                  }
-
-                  const pingGasParams = await calculateGasParams('ping', pingEstimatedGas);
-                  
-                  const pingTxHash = await web3Provider.callContract(
-                    cloneAddress,
-                    getFunctionABI(PINGER_ABI),
-                    'ping',
-                    [],
-                    pingGasParams
-                  );
-                  addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
-                  
-                  const pingReceipt = await web3Provider.waitForTransaction(pingTxHash);
-                  if (pingReceipt.status === '0x1') {
-                    addLog(`Clone ${i} - Ping ${j} successful`, 'success');
-                    addLog(`Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(pingReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-                  } else {
-                    addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
-                  }
-                } catch (pingError: any) {
-                  addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
-                }
-              }
-            } else {
-              addLog(`Clone ${i} created but address could not be extracted`, 'warning');
-              addLog(`Block: ${parseInt(cloneReceipt.blockNumber, 16)}, Gas Used: ${parseInt(cloneReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-            }
-          } else {
-            addLog(`Clone ${i} transaction failed`, 'error');
-            continue;
-          }
-        } catch (cloneError: any) {
-          addLog(`Clone ${i} creation error: ${cloneError.message}`, 'error');
-        }
-      }
-
-      addLog(`All operations completed! Total ${newClones.length} clones successfully created.`, 'success');
-      if (newClones.length > 0) {
-        addLog(`Total ${newClones.length * pingsPerClone} ping operations performed.`, 'success');
-      }
-      toast.success(t('toast.operationsComplete'));
-    } catch (error: any) {
-      addLog(`General operation error: ${error.message}`, 'error');
-      toast.error('Error occurred during operations!');
-    } finally {
-      setIsProcessing(false);
-    }
+    toast.info('İşlem akışı Farcaster’a taşınacak. Şimdilik pasif.');
+    addLog('Start is disabled in Farcaster-only mode', 'warning');
   };
-
   const stopProcess = () => {
     setIsProcessing(false);
     addLog('Process stopped by user', 'warning');
-    toast.warning(t('toast.processStopped'));
   };
-
-  useEffect(() => {
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length === 0) {
-          disconnectWallet();
-        } else {
-          setAccount(accounts[0]);
-          addLog(`Account changed: ${accounts[0]}`, 'info');
-        }
-      };
-
-      const handleChainChanged = async (chainId: string) => {
-        setCurrentChainId(chainId);
-        const isBase = chainId === BASE_NETWORK.chainId;
-        setIsOnBaseNetwork(isBase);
-        
-        if (isBase) {
-          addLog('Switched to Base network', 'success');
-          toast.success(t('toast.networkSwitched'));
-        } else {
-          addLog(`Network changed (Chain ID: ${chainId}). Please switch to Base network.`, 'warning');
-          toast.warning(t('toast.switchToBase'));
-        }
-      };
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
-
-      return () => {
-        if (window.ethereum) {
-          window.ethereum.removeAllListeners('accountsChanged');
-          window.ethereum.removeAllListeners('chainChanged');
-        }
-      };
-    }
-  }, [t]);
 
   const getLogTypeColor = (type: LogEntry['type']) => {
     switch (type) {
@@ -605,7 +183,7 @@ export default function MetaMaskApp() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
             {t('header.title')}
           </h1>
-          
+
           {/* Language Selector - Button Group */}
           <div className="flex justify-center gap-2 mb-4">
             <Button
@@ -625,7 +203,7 @@ export default function MetaMaskApp() {
               {t('language.turkish')}
             </Button>
           </div>
-          
+
           <p className="text-muted-foreground text-lg">
             {t('header.subtitle')}
           </p>
@@ -639,50 +217,52 @@ export default function MetaMaskApp() {
           </AlertDescription>
         </Alert>
 
-        {/* Network Warning */}
-        {web3Provider && !isOnBaseNetwork && (
-          <Alert className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200">
-              <div className="flex items-center justify-between">
-                <span>{t('network.warning')}</span>
-                <Button 
-                  onClick={switchToBaseNetwork}
-                  size="sm"
-                  className="ml-4"
-                >
-                  <Network className="mr-2 h-4 w-4" />
-                  {t('network.switchButton')}
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Left Column */}
           <div className="space-y-6">
-            {/* Wallet Connection */}
+            {/* Farcaster Sign-in */}
             <Card className="border-2 border-primary/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Wallet className="h-5 w-5" />
-                  {t('wallet.title')}
+                  <User className="h-5 w-5" />
+                  Farcaster
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {!isConnected ? (
-                  <Button onClick={connectWallet} className="w-full" size="lg">
-                    <Wallet className="mr-2 h-4 w-4" />
-                    {t('wallet.connect')}
-                  </Button>
+                {!fcSignedIn ? (
+                  <div className="space-y-3">
+                    <div className="grid gap-2">
+                      <Label htmlFor="custody">Custody address</Label>
+                      <Input
+                        id="custody"
+                        placeholder="0x..."
+                        value={custodyAddress}
+                        onChange={(e) => setCustodyAddress(e.target.value as `0x${string}`)}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="username">Farcaster username (optional)</Label>
+                      <Input
+                        id="username"
+                        placeholder="mrvoodoo"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                      />
+                    </div>
+                    <Button onClick={signInWithFarcaster} className="w-full" size="lg">
+                      <User className="mr-2 h-4 w-4" />
+                      Sign in with Farcaster
+                    </Button>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm font-mono break-all">{account}</p>
+                      <p className="text-sm">Signed in</p>
+                      {fid && <p className="text-sm opacity-80">FID: {fid}</p>}
+                      {username && <p className="text-sm opacity-80">@{username}</p>}
                     </div>
-                    <Button variant="outline" size="sm" onClick={disconnectWallet} className="w-full">
-                      {t('wallet.disconnect')}
+                    <Button variant="outline" size="sm" onClick={signOutFarcaster} className="w-full">
+                      Sign out
                     </Button>
                   </div>
                 )}
@@ -691,9 +271,10 @@ export default function MetaMaskApp() {
 
             {/* NFT Mint Section */}
             <NFTMintSection
-              web3Provider={web3Provider}
-              isConnected={isConnected}
-              isOnBaseNetwork={isOnBaseNetwork}
+              // EVM provider kaldırıldı. İlk aşamada null geçiyoruz.
+              web3Provider={null as any}
+              isConnected={fcSignedIn}
+              isOnBaseNetwork={true}
               onLog={addLog}
             />
           </div>
@@ -709,15 +290,18 @@ export default function MetaMaskApp() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button 
+                <Button
                   onClick={deployRealPinger}
-                  disabled={!isConnected || !isOnBaseNetwork || isDeploying}
+                  disabled
                   size="lg"
                   className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
                 >
                   <Rocket className="mr-2 h-5 w-5" />
-                  {isDeploying ? t('deploy.deploying') : t('deploy.button')}
+                  {t('deploy.button')}
                 </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Zincir işlemleri Farcaster akışına taşınacak. Şimdilik pasif.
+                </p>
               </CardContent>
             </Card>
 
@@ -729,46 +313,45 @@ export default function MetaMaskApp() {
                   {t('farming.description')}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
-<Label htmlFor="cloneCount">{t('farming.cloneCount')}</Label>
-<div id="cloneCount" className="mt-2 flex items-center gap-3">
-  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-    <label key={n} className="inline-flex items-center">
-      <input
-        type="radio"
-        name="cloneCount"
-        value={n}
-        checked={cloneCount === n}
-        onChange={() => setCloneCount(n)}
-        className="appearance-none w-3.5 h-3.5 rounded-full bg-gray-300 cursor-pointer checked:bg-blue-600 transition-colors"
-        disabled={isProcessing}
-      />
-      <span className="sr-only">{n}</span>
-    </label>
-  ))}
-</div>
-
+                  <Label htmlFor="cloneCount">{t('farming.cloneCount')}</Label>
+                  <div id="cloneCount" className="mt-2 flex items-center gap-3">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                      <label key={n} className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="cloneCount"
+                          value={n}
+                          checked={cloneCount === n}
+                          onChange={() => setCloneCount(n)}
+                          className="appearance-none w-3.5 h-3.5 rounded-full bg-gray-300 cursor-pointer checked:bg-blue-600 transition-colors"
+                          disabled
+                        />
+                        <span className="sr-only">{n}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-<Label htmlFor="pingsPerClone">{t('farming.pingsPerClone')}</Label>
-<div id="pingsPerClone" className="mt-2 flex items-center gap-2 flex-wrap">
-  {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
-    <label key={n} className="inline-flex items-center">
-      <input
-        type="radio"
-        name="pingsPerClone"
-        value={n}
-        checked={pingsPerClone === n}
-        onChange={() => setPingsPerClone(n)}
-        className="appearance-none w-3 h-3 rounded-full bg-gray-300 cursor-pointer checked:bg-green-600 transition-colors"
-        disabled={isProcessing}
-      />
-      <span className="sr-only">{n}</span>
-    </label>
-  ))}
-</div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="pingsPerClone">{t('farming.pingsPerClone')}</Label>
+                  <div id="pingsPerClone" className="mt-2 flex items-center gap-2 flex-wrap">
+                    {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                      <label key={n} className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="pingsPerClone"
+                          value={n}
+                          checked={pingsPerClone === n}
+                          onChange={() => setPingsPerClone(n)}
+                          className="appearance-none w-3 h-3 rounded-full bg-gray-300 cursor-pointer checked:bg-green-600 transition-colors"
+                          disabled
+                        />
+                        <span className="sr-only">{n}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Advanced Settings */}
@@ -785,31 +368,12 @@ export default function MetaMaskApp() {
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-3 mt-3">
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-800 dark:text-amber-200">
                         {t('farming.advancedWarning')}
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <Label>{t('farming.gasMode')}</Label>
-                      <RadioGroup
-                        value={advancedSettings.gasMode}
-                        onValueChange={(value: 'wallet' | 'custom') => 
-                          setAdvancedSettings(prev => ({ ...prev, gasMode: value }))
-                        }
-                        disabled={isProcessing}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="wallet" id="wallet" />
-                          <Label htmlFor="wallet">{t('farming.walletSuggested')}</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="custom" id="custom" />
-                          <Label htmlFor="custom">{t('farming.custom')}</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
+                      </AlertDescription>
+                    </Alert>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
@@ -823,7 +387,7 @@ export default function MetaMaskApp() {
                             ...prev,
                             minGasCreateClone: parseInt(e.target.value) || 180000
                           }))}
-                          disabled={isProcessing}
+                          disabled
                         />
                       </div>
                       <div className="space-y-2">
@@ -837,7 +401,7 @@ export default function MetaMaskApp() {
                             ...prev,
                             minGasPing: parseInt(e.target.value) || 50000
                           }))}
-                          disabled={isProcessing}
+                          disabled
                         />
                       </div>
                     </div>
@@ -856,7 +420,7 @@ export default function MetaMaskApp() {
                               ...prev,
                               maxFee: parseFloat(e.target.value) || 0.05
                             }))}
-                            disabled={isProcessing}
+                            disabled
                           />
                         </div>
                         <div className="space-y-2">
@@ -871,7 +435,7 @@ export default function MetaMaskApp() {
                               ...prev,
                               priority: parseFloat(e.target.value) || 0.01
                             }))}
-                            disabled={isProcessing}
+                            disabled
                           />
                         </div>
                       </div>
@@ -889,7 +453,7 @@ export default function MetaMaskApp() {
                           ...prev,
                           gasBuffer: parseInt(e.target.value) || 20
                         }))}
-                        disabled={isProcessing}
+                        disabled
                       />
                     </div>
                   </CollapsibleContent>
@@ -902,9 +466,9 @@ export default function MetaMaskApp() {
               <CardContent className="pt-6">
                 <div className="flex gap-3">
                   {!isProcessing ? (
-                    <Button 
-                      onClick={startProcess} 
-                      disabled={!isConnected || !isOnBaseNetwork}
+                    <Button
+                      onClick={startProcess}
+                      disabled
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                       size="lg"
                     >
@@ -912,7 +476,7 @@ export default function MetaMaskApp() {
                       {t('farming.startButton')}
                     </Button>
                   ) : (
-                    <Button 
+                    <Button
                       onClick={stopProcess}
                       variant="destructive"
                       className="flex-1"
@@ -923,6 +487,9 @@ export default function MetaMaskApp() {
                     </Button>
                   )}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  İşlem butonları Farcaster imzalama akışına taşındıktan sonra aktif olacak.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -930,10 +497,10 @@ export default function MetaMaskApp() {
 
         {/* Wallet Activity */}
         <div className="mb-6">
-          <WalletStats 
-            account={account}
-            isConnected={isConnected}
-            isOnBaseNetwork={isOnBaseNetwork}
+          <WalletStats
+            account={''}
+            isConnected={fcSignedIn}
+            isOnBaseNetwork={true}
           />
         </div>
 
@@ -947,14 +514,13 @@ export default function MetaMaskApp() {
                   {t('logs.description')}
                 </CardDescription>
               </div>
-              <Button 
+              <Button
                 onClick={clearLogs}
                 variant="outline"
                 size="sm"
-                disabled={clearLogsMutation.isPending}
               >
                 <Trash2 className="h-4 w-4" />
-                {clearLogsMutation.isPending ? t('logs.clearing') : t('logs.clear')}
+                {t('logs.clear')}
               </Button>
             </div>
           </CardHeader>
@@ -982,43 +548,6 @@ export default function MetaMaskApp() {
                 </div>
               )}
             </ScrollArea>
-          </CardContent>
-        </Card>
-
-        {/* Contract Information */}
-        <Card className="shadow-lg mt-6">
-          <CardHeader>
-            <CardTitle>{t('contract.title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-semibold mb-1">{t('contract.factory')}</p>
-              <p className="text-xs font-mono break-all">{FACTORY_ADDR}</p>
-            </div>
-            {createdClones.length > 0 && (
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-semibold mb-2">{t('contract.clones')} ({createdClones.length}):</p>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {createdClones.map((clone, index) => (
-                    <p key={clone} className="text-xs font-mono break-all">
-                      {index + 1}. {clone}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-            {deployedPingers.length > 0 && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                <p className="text-sm font-semibold mb-2 text-emerald-700 dark:text-emerald-400">{t('contract.pingers')} ({deployedPingers.length}):</p>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {deployedPingers.map((pinger, index) => (
-                    <p key={pinger} className="text-xs font-mono break-all text-emerald-600 dark:text-emerald-300">
-                      {index + 1}. {pinger}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -1057,9 +586,9 @@ export default function MetaMaskApp() {
                 </div>
               </div>
             </div>
-            
+
             <Separator className="bg-blue-200 dark:bg-blue-800" />
-            
+
             <div className="space-y-2">
               <div className="flex items-start gap-2">
                 <span className="text-amber-600 dark:text-amber-400">⚡</span>
@@ -1069,14 +598,13 @@ export default function MetaMaskApp() {
                 <span className="text-green-600 dark:text-green-400">💬</span>
                 <div>
                   {t('info.contact')}{' '}
-                  <a 
-                    href="https://x.com/MrVooDooNFT" 
-                    target="_blank" 
+                  <a
+                    href="https://x.com/MrVooDooNFT"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-1"
                   >
                     @MrVooDooNFT
-                    <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
               </div>
@@ -1088,9 +616,9 @@ export default function MetaMaskApp() {
         <footer className="mt-12 text-center text-sm text-muted-foreground">
           <p>
             © 2025. {t('footer.builtWith')} <Heart className="inline h-4 w-4 text-red-500" /> {t('footer.using')}{' '}
-            <a 
-              href="https://caffeine.ai" 
-              target="_blank" 
+            <a
+              href="https://caffeine.ai"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
