@@ -5,26 +5,16 @@ import { Toaster } from "sonner";
 import MetaMaskApp from "./components/MetaMaskApp";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
-// Farcaster MiniApp SDK
-import { MiniAppSDK } from "@farcaster/miniapp-sdk";
+import { sdk } from "@farcaster/miniapp-sdk"; // ← doğru import
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 1000 * 60 * 5, refetchOnWindowFocus: false },
-  },
+  defaultOptions: { queries: { staleTime: 1000 * 60 * 5, refetchOnWindowFocus: false } },
 });
 
 function App() {
   useEffect(() => {
-    // Sadece Warpcast içindeyken çalışır
-    const isWarpcast = /Warpcast/i.test(navigator.userAgent);
-    if (!isWarpcast) return;
-
-    const sdk = new MiniAppSDK();
-    sdk.actions
-      .ready()
-      .then(() => console.log("Miniapp ready called"))
-      .catch((err) => console.error("Miniapp ready error:", err));
+    if (!sdk.isInMiniApp?.()) return; // Warpcast/Base içindeyse çalıştır
+    sdk.actions.ready().catch((e) => console.error("miniapp ready error:", e));
   }, []);
 
   return (
