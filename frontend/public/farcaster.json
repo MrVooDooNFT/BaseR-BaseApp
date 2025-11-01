@@ -10,7 +10,9 @@
     "webhookUrl": "https://base-r-base-app-pcwl.vercel.app/api/webhook",
     "subtitle": "BaseR",
     "description": "BaseR Tool",
-    "primaryCategory": "utility"
+    "primaryCategory": "utility",
+    "requiredCapabilities": ["wallet.getEthereumProvider"],
+    "requiredChains": ["eip155:8453"]
   },
   "accountAssociation": {
     "header": "eyJmaWQiOjM4MzYxMiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweEY1NWMwOWJiMzc4MzlmOGFiZWIzM0Q1QTI1NmZhNjU0OUM4MjlmQ0IifQ",
