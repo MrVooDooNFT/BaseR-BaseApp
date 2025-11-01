@@ -568,7 +568,6 @@ useEffect(() => {
 
   (async () => {
     try {
-      // 1) Mini app kontrolü (await!)
       const inMini = await sdk.isInMiniApp?.();
       addLog("isInMiniApp=" + String(inMini), "info");
       if (!inMini) {
@@ -576,12 +575,10 @@ useEffect(() => {
         return;
       }
 
-      // 2) Ready
       addLog("Calling sdk.actions.ready()", "info");
       await sdk.actions.ready();
       if (cancelled) return;
 
-      // 3) Provider (await!)
       const eth: any = await sdk.wallet.getEthereumProvider?.();
       addLog("provider=" + String(!!eth) + " request=" + typeof eth?.request, "info");
       if (!eth || typeof eth.request !== "function") {
@@ -589,7 +586,6 @@ useEffect(() => {
         return;
       }
 
-      // 4) Accounts
       addLog("Checking accounts…", "info");
       let accounts: string[] = await eth.request({ method: "eth_accounts" });
       if (!accounts?.[0]) {
@@ -601,9 +597,11 @@ useEffect(() => {
         return;
       }
 
-      setAddress(accounts[0]);
+      // setAddress yerine setAccount
+      setAccount(accounts[0]);
       addLog("Connected: " + accounts[0], "success");
-      // Not: Farcaster cüzdan zaten Base'te — chain switch yok.
+
+      // Not: Farcaster cüzdan zaten Base'te, chain switch yok.
     } catch (e: any) {
       addLog(`Auto-connect error: ${e?.message || String(e)}`, "error");
       console.error(e);
@@ -612,6 +610,7 @@ useEffect(() => {
 
   return () => { cancelled = true; };
 }, []);
+
 
 
 
