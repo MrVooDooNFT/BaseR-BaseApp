@@ -259,15 +259,13 @@ export default function MetaMaskApp() {
     }
   };
 
-  const connectWallet = async () => {
 const connectWallet = async () => {
   try {
     addLog('Connecting Farcaster wallet...', 'info');
 
     const client = await createClient();
-    const ctx = await client.context;
+    await client.context;
 
-    // Farcaster mini app içindeki provider
     const eth: any = (globalThis as any).ethereum;
     if (!eth) {
       addLog('No Farcaster provider found', 'error');
@@ -275,9 +273,8 @@ const connectWallet = async () => {
       return;
     }
 
-    // Web3Provider'ı Farcaster provider ile başlat
-  const provider = new BrowserProvider(eth as any);
-
+    // Kendi wrapper'ını kullan
+    const provider = new Web3Provider(eth as any);
 
     // Adresleri al
     let addrs: string[] = [];
@@ -309,6 +306,7 @@ const connectWallet = async () => {
     toast.error(t('toast.walletConnectFailed'));
   }
 };
+
   const disconnectWallet = () => {
     setAccount('');
     setIsConnected(false);
