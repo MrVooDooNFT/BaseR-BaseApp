@@ -568,7 +568,6 @@ useEffect(() => {
 
   (async () => {
     try {
-      // Sadece Mini App içinde çalış
       if (!sdk?.isInMiniApp?.()) {
         addLog("Not running inside Warpcast Mini App", "warning");
         return;
@@ -578,11 +577,9 @@ useEffect(() => {
       await sdk.actions.ready();
       if (cancelled) return;
 
-      // Mevcut hesap var mı?
       addLog("Checking accounts…", "info");
       let accounts: string[] = await sdk.wallet.request({ method: "eth_accounts" });
 
-      // Yoksa izin iste
       if (!accounts || !accounts[0]) {
         addLog("Requesting accounts…", "info");
         accounts = await sdk.wallet.request({ method: "eth_requestAccounts" });
@@ -595,7 +592,6 @@ useEffect(() => {
       setAddress(accounts[0]);
       addLog("Connected: " + accounts[0], "success");
 
-      // Base mainnet
       await sdk.wallet.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: "0x2105" }]
@@ -611,48 +607,6 @@ useEffect(() => {
     cancelled = true;
   };
 }, []);
-
-
-
-  // Hesap ve ağ değişikliklerini dinle
-  if ((globalThis as any).ethereum) {
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length === 0) {
-        disconnectWallet();
-      } else {
-        setAccount(accounts[0]);
-        addLog(`Account changed: ${accounts[0]}`, 'info');
-      }
-    };
-
-    const handleChainChanged = async (chainId: string) => {
-      setCurrentChainId(chainId);
-      const isBase = chainId === BASE_NETWORK.chainId;
-      setIsOnBaseNetwork(isBase);
-      if (isBase) {
-        addLog('Switched to Base network', 'success');
-      } else {
-        addLog(`Network changed: ${chainId}`, 'warning');
-      }
-    };
-
-    (globalThis as any).ethereum.on('accountsChanged', handleAccountsChanged);
-    (globalThis as any).ethereum.on('chainChanged', handleChainChanged);
-
-    return () => {
-      mounted = false;
-      try {
-        (globalThis as any).ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        (globalThis as any).ethereum.removeListener('chainChanged', handleChainChanged);
-      } catch (_) {}
-    };
-  }
-
-  return () => {
-    mounted = false;
-  };
-}, []);
-
 
   const getLogTypeColor = (type: LogEntry['type']) => {
     switch (type) {
