@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@farcaster/frame-sdk';
-import { BrowserProvider } from 'ethers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -277,7 +276,8 @@ const connectWallet = async () => {
     }
 
     // Web3Provider'ı Farcaster provider ile başlat
-    const provider = new Web3Provider(eth);
+  const provider = new BrowserProvider(eth as any);
+
 
     // Adresleri al
     let addrs: string[] = [];
