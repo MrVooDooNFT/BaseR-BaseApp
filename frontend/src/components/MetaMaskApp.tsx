@@ -577,14 +577,19 @@ useEffect(() => {
       await sdk.actions.ready();
       if (cancelled) return;
 
+      // Farcaster Wallet EIP-1193 provider'ı al
+      const eth: any = sdk.wallet.getEthereumProvider();
+      if (!eth || typeof eth.request !== "function") {
+        addLog("Ethereum provider not available", "error");
+        return;
+      }
+
       addLog("Checking accounts…", "info");
-      const eth = sdk.wallet.getEthereumProvider();
       let accounts: string[] = await eth.request({ method: "eth_accounts" });
 
       if (!accounts || !accounts[0]) {
         addLog("Requesting accounts…", "info");
         accounts = await eth.request({ method: "eth_requestAccounts" });
-
       }
       if (!accounts || !accounts[0]) {
         addLog("No account returned", "error");
@@ -595,10 +600,9 @@ useEffect(() => {
       addLog("Connected: " + accounts[0], "success");
 
       await eth.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0x2105" }]
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x2105" }]
       });
-
       addLog("Switched to Base", "success");
     } catch (e: any) {
       addLog(`Auto-connect error: ${e?.message || String(e)}`, "error");
@@ -610,6 +614,7 @@ useEffect(() => {
     cancelled = true;
   };
 }, []);
+
 
   const getLogTypeColor = (type: LogEntry['type']) => {
     switch (type) {
