@@ -1,9 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    { "source": "/.well-known/(.*)", "destination": "/.well-known/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "headers": [
     {
       "source": "/.well-known/(.*)",
@@ -12,5 +8,9 @@
         { "key": "Content-Type", "value": "application/json; charset=utf-8" }
       ]
     }
+  ],
+  "ignoreCommand": false,
+  "rewrites": [
+    { "source": "/((?!\\.well-known).*)", "destination": "/index.html" }
   ]
 }
