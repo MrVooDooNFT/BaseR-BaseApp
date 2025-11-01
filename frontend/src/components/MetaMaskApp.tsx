@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createClient } from '@farcaster/frame-sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -263,28 +263,29 @@ const connectWallet = async () => {
   try {
     addLog('Connecting Farcaster wallet...', 'info');
 
-    const client = await createClient();
-    await client.context;
+    // Mini App context (isteğe bağlı, ileride kullanılabilir)
+    const ctx = await sdk.context.get();
 
-    const eth: any = (globalThis as any).ethereum;
+    // Farcaster Mini App provider
+    const eth = await sdk.wallet.getEthereumProvider();
     if (!eth) {
       addLog('No Farcaster provider found', 'error');
       toast.error(t('toast.noWallet'));
       return;
     }
 
-    // Kendi wrapper'ını kullan
+    // Mevcut projenin kendi wrapper'ı
     const provider = new Web3Provider(eth as any);
 
-    // Adresleri al
+    // Adresleri al, yoksa iste
     let addrs: string[] = [];
     try {
-      addrs = await client.wallet.getAddresses();
+      addrs = await sdk.wallet.getAddresses();
     } catch {
       addrs = [];
     }
     if (!addrs || addrs.length === 0) {
-      const req = await client.wallet.requestAddresses();
+      const req = await sdk.wallet.requestAddresses();
       addrs = req ?? [];
     }
     if (!addrs || addrs.length === 0) {
@@ -302,10 +303,11 @@ const connectWallet = async () => {
 
     await checkNetwork(provider);
   } catch (error: any) {
-    addLog(`Farcaster wallet error: ${error.message}`, 'error');
+    addLog(`Farcaster wallet error: ${error?.message || error}`, 'error');
     toast.error(t('toast.walletConnectFailed'));
   }
 };
+
 
   const disconnectWallet = () => {
     setAccount('');
