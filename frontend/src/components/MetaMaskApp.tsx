@@ -568,24 +568,50 @@ useEffect(() => {
 
   (async () => {
     try {
-      addLog('App initialized, calling sdk.actions.ready()', 'info');
-
-      if (sdk?.isInMiniApp?.()) {
-        await sdk.actions.ready();
-        if (!cancelled) {
-          addLog('MiniApp ready, connecting wallet...', 'info');
-          await connectWallet();
-        }
-      } else {
-        addLog('Not running inside Warpcast Mini App', 'warning');
+      // Sadece Mini App içinde çalış
+      if (!sdk?.isInMiniApp?.()) {
+        addLog("Not running inside Warpcast Mini App", "warning");
+        return;
       }
+
+      addLog("Calling sdk.actions.ready()", "info");
+      await sdk.actions.ready();
+      if (cancelled) return;
+
+      // Mevcut hesap var mı?
+      addLog("Checking accounts…", "info");
+      let accounts: string[] = await sdk.wallet.request({ method: "eth_accounts" });
+
+      // Yoksa izin iste
+      if (!accounts || !accounts[0]) {
+        addLog("Requesting accounts…", "info");
+        accounts = await sdk.wallet.request({ method: "eth_requestAccounts" });
+      }
+      if (!accounts || !accounts[0]) {
+        addLog("No account returned", "error");
+        return;
+      }
+
+      setAddress(accounts[0]);
+      addLog("Connected: " + accounts[0], "success");
+
+      // Base mainnet
+      await sdk.wallet.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x2105" }]
+      });
+      addLog("Switched to Base", "success");
     } catch (e: any) {
-      if (!cancelled) addLog(`Auto-connect error: ${e?.message || e}`, 'error');
+      addLog(`Auto-connect error: ${e?.message || String(e)}`, "error");
+      console.error(e);
     }
   })();
 
-  return () => { cancelled = true; };
+  return () => {
+    cancelled = true;
+  };
 }, []);
+
 
 
   // Hesap ve ağ değişikliklerini dinle
