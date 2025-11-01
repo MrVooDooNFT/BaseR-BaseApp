@@ -564,22 +564,27 @@ const connectWallet = async () => {
   };
 
 useEffect(() => {
+  let cancelled = false;
+
   (async () => {
     try {
       addLog('App initialized, calling sdk.actions.ready()', 'info');
 
-      // Farcaster Mini App içindeysek otomatik bağlan
       if (sdk?.isInMiniApp?.()) {
         await sdk.actions.ready();
-        addLog('MiniApp ready, connecting wallet...', 'info');
-        await connectWallet();
+        if (!cancelled) {
+          addLog('MiniApp ready, connecting wallet...', 'info');
+          await connectWallet();
+        }
       } else {
         addLog('Not running inside Warpcast Mini App', 'warning');
       }
     } catch (e: any) {
-      addLog(`Auto-connect error: ${e?.message || e}`, 'error');
+      if (!cancelled) addLog(`Auto-connect error: ${e?.message || e}`, 'error');
     }
   })();
+
+  return () => { cancelled = true; };
 }, []);
 
 
