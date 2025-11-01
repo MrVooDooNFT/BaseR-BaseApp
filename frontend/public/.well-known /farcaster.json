@@ -1,0 +1,12 @@
+ },
+  "miniapp": {
+    "version": "1",
+    "name": "BaseR",
+    "homeUrl": "https://base-r-base-app-pcwl.vercel.app/",
+    "iconUrl": "https://base-r-base-app-pcwl.vercel.app//favicon.ico",
+    "description": "BaseR Tool."
+  },
+  "baseBuilder": {
+    "ownerAddress": "0xF55c09bb37839f8abeb33D5A256fa6549C829fCB"
+  }
+}
