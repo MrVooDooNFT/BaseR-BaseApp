@@ -564,20 +564,24 @@ const connectWallet = async () => {
   };
 
 useEffect(() => {
-  let mounted = true;
-
   (async () => {
     try {
-      // Farcaster mini app içindeysek otomatik bağlan
-      if (typeof (globalThis as any).ethereum !== 'undefined') {
+      addLog('App initialized, calling sdk.actions.ready()', 'info');
+
+      // Farcaster Mini App içindeysek otomatik bağlan
+      if (sdk?.isInMiniApp?.()) {
+        await sdk.actions.ready();
+        addLog('MiniApp ready, connecting wallet...', 'info');
         await connectWallet();
       } else {
-        addLog('No ethereum provider detected, skip auto-connect', 'info');
+        addLog('Not running inside Warpcast Mini App', 'warning');
       }
     } catch (e: any) {
       addLog(`Auto-connect error: ${e?.message || e}`, 'error');
     }
   })();
+}, []);
+
 
   // Hesap ve ağ değişikliklerini dinle
   if ((globalThis as any).ethereum) {
