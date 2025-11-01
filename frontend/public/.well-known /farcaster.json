@@ -1,12 +1,20 @@
- },
-  "miniapp": {
-    "version": "1",
+{
+  "frame": {
     "name": "BaseR",
-    "homeUrl": "https://base-r-base-app-pcwl.vercel.app/",
-    "iconUrl": "https://base-r-base-app-pcwl.vercel.app//favicon.ico",
-    "description": "BaseR Tool."
+    "version": "1",
+    "iconUrl": "https://base-r-base-app-pcwl.vercel.app/icon.png",
+    "homeUrl": "https://base-r-base-app-pcwl.vercel.app",
+    "imageUrl": "https://base-r-base-app-pcwl.vercel.app/image.png",
+    "splashImageUrl": "https://base-r-base-app-pcwl.vercel.app/splash.png",
+    "splashBackgroundColor": "#6200EA",
+    "webhookUrl": "https://base-r-base-app-pcwl.vercel.app/api/webhook",
+    "subtitle": "BaseR",
+    "description": "BaseR Tool",
+    "primaryCategory": "utility"
   },
-  "baseBuilder": {
-    "ownerAddress": "0xF55c09bb37839f8abeb33D5A256fa6549C829fCB"
+  "accountAssociation": {
+    "header": "eyJmaWQiOjM4MzYxMiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweEY1NWMwOWJiMzc4MzlmOGFiZWIzM0Q1QTI1NmZhNjU0OUM4MjlmQ0IifQ",
+    "payload": "eyJkb21haW4iOiJiYXNlLXItYmFzZS1hcHAtcGN3bC52ZXJjZWwuYXBwIn0",
+    "signature": "IxXxAv4ZsRTOh+uNQLs9BHopDgA/78t1x4KE9AOwp+kEC7NHMiBGld8BN33G5XD5EBT8EICiSIe8TVxEVk0a+hw="
   }
 }
