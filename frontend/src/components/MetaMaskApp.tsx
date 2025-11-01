@@ -568,51 +568,51 @@ useEffect(() => {
 
   (async () => {
     try {
-      // Mini app içinde miyiz
-      addLog("isInMiniApp=" + String(sdk?.isInMiniApp?.()), "info");
-      if (!sdk?.isInMiniApp?.()) {
+      // 1) Mini app kontrolü (await!)
+      const inMini = await sdk.isInMiniApp?.();
+      addLog("isInMiniApp=" + String(inMini), "info");
+      if (!inMini) {
         addLog("Not running inside Warpcast Mini App", "warning");
         return;
       }
 
+      // 2) Ready
       addLog("Calling sdk.actions.ready()", "info");
       await sdk.actions.ready();
       if (cancelled) return;
 
-      // Provider kontrolü
-      const eth: any = sdk.wallet.getEthereumProvider?.();
+      // 3) Provider (await!)
+      const eth: any = await sdk.wallet.getEthereumProvider?.();
       addLog("provider=" + String(!!eth) + " request=" + typeof eth?.request, "info");
       if (!eth || typeof eth.request !== "function") {
         addLog("Ethereum provider not available", "error");
         return;
       }
 
-      // Hesap kontrolü + gerekirse izin iste
+      // 4) Accounts
       addLog("Checking accounts…", "info");
       let accounts: string[] = await eth.request({ method: "eth_accounts" });
-      if (!accounts || !accounts[0]) {
+      if (!accounts?.[0]) {
         addLog("Requesting accounts…", "info");
         accounts = await eth.request({ method: "eth_requestAccounts" });
       }
-      if (!accounts || !accounts[0]) {
+      if (!accounts?.[0]) {
         addLog("No account returned", "error");
         return;
       }
 
       setAddress(accounts[0]);
       addLog("Connected: " + accounts[0], "success");
-
-      // Not: Farcaster cüzdan zaten Base ağında, chain switch gereksiz
+      // Not: Farcaster cüzdan zaten Base'te — chain switch yok.
     } catch (e: any) {
       addLog(`Auto-connect error: ${e?.message || String(e)}`, "error");
       console.error(e);
     }
   })();
 
-  return () => {
-    cancelled = true;
-  };
+  return () => { cancelled = true; };
 }, []);
+
 
 
 
