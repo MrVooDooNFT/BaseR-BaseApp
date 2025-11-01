@@ -1,12 +1,50 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BaseR by Mr VooDoo</title>
 
-<html lang='en'>
-    <head>
-        <meta charset='UTF-8' />
-        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-        <title>BaseR by Mr VooDoo</title>
-    </head>
-    <body>
-        <div id='root'></div>
-        <script type='module' src='/src/main.tsx'></script>
-    </body>
+    <!-- Farcaster Miniapp Metadata -->
+    <meta
+      name="fc:miniapp"
+      content='{
+        "version": "1",
+        "imageUrl": "https://base-r-base-app-pcwl.vercel.app/splash.jpg",
+        "button": {
+          "title": "Open BaseR",
+          "action": {
+            "type": "launch_miniapp",
+            "url": "https://base-r-base-app-pcwl.vercel.app/",
+            "name": "BaseR",
+            "splashImageUrl": "https://base-r-base-app-pcwl.vercel.app/icon.jpg",
+            "splashBackgroundColor": "#ffffff"
+          }
+        }
+      }'
+    />
+
+    <!-- Geri uyum için (opsiyonel ama önerilir) -->
+    <meta
+      name="fc:frame"
+      content='{
+        "version": "1",
+        "imageUrl": "https://base-r-base-app-pcwl.vercel.app/splash.jpg",
+        "button": {
+          "title": "Open BaseR",
+          "action": {
+            "type": "launch_miniapp",
+            "url": "https://base-r-base-app-pcwl.vercel.app/",
+            "name": "BaseR",
+            "splashImageUrl": "https://base-r-base-app-pcwl.vercel.app/icon.jpg",
+            "splashBackgroundColor": "#ffffff"
+          }
+        }
+      }'
+    />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
