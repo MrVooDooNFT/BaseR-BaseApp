@@ -1,6 +1,6 @@
 {
   "routes": [
-    { "src": "/.well-known/(.*)", "dest": "/.well-known/$1" },
+    { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
