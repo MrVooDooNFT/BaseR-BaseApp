@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { createClient } from '@farcaster/frame-sdk';
+import { BrowserProvider } from 'ethers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -259,44 +261,54 @@ export default function MetaMaskApp() {
   };
 
   const connectWallet = async () => {
-    if (!checkWallet()) return;
+const connectWallet = async () => {
+  try {
+    addLog('Connecting Farcaster wallet...', 'info');
 
-    try {
-      const walletType = detectWallet();
-      addLog(`Connecting to ${walletType}...`, 'info');
-      
-      const provider = new Web3Provider(window.ethereum!);
-      
-      const accounts = await provider.requestAccounts();
-      
-      if (accounts.length > 0) {
-        setAccount(accounts[0]);
-        setIsConnected(true);
-        setWeb3Provider(provider);
-        setConnectedWallet(walletType || 'Unknown');
-        
-        addLog(t('wallet.connected'), 'success');
-        addLog(`Factory contract address: ${FACTORY_ADDR}`, 'info');
-        
-        const createCloneSelector = provider.getFunctionSelector('createClone');
-        addLog(`createClone function selector: ${createCloneSelector}`, 'info');
-        
-        if (createCloneSelector === '0x64f2d4b9') {
-          addLog('✓ createClone function selector verified (0x64f2d4b9)', 'success');
-        } else {
-          addLog(`⚠ createClone function selector is not expected value! Expected: 0x64f2d4b9, Found: ${createCloneSelector}`, 'warning');
-        }
-        
-        toast.success(t('toast.walletConnected'));
-        
-        await checkNetwork(provider);
-      }
-    } catch (error: any) {
-      addLog(`Wallet connection error: ${error.message}`, 'error');
-      toast.error('Wallet connection failed!');
+    const client = await createClient();
+    const ctx = await client.context;
+
+    // Farcaster mini app içindeki provider
+    const eth: any = (globalThis as any).ethereum;
+    if (!eth) {
+      addLog('No Farcaster provider found', 'error');
+      toast.error(t('toast.noWallet'));
+      return;
     }
-  };
 
+    // Web3Provider'ı Farcaster provider ile başlat
+    const provider = new Web3Provider(eth);
+
+    // Adresleri al
+    let addrs: string[] = [];
+    try {
+      addrs = await client.wallet.getAddresses();
+    } catch {
+      addrs = [];
+    }
+    if (!addrs || addrs.length === 0) {
+      const req = await client.wallet.requestAddresses();
+      addrs = req ?? [];
+    }
+    if (!addrs || addrs.length === 0) {
+      addLog('No wallet address returned from Farcaster', 'error');
+      return;
+    }
+
+    setAccount(addrs[0]);
+    setIsConnected(true);
+    setWeb3Provider(provider);
+    setConnectedWallet('Farcaster');
+
+    addLog('Wallet connected via Farcaster', 'success');
+    toast.success(t('toast.walletConnected'));
+
+    await checkNetwork(provider);
+  } catch (error: any) {
+    addLog(`Farcaster wallet error: ${error.message}`, 'error');
+    toast.error(t('toast.walletConnectFailed'));
+  }
+};
   const disconnectWallet = () => {
     setAccount('');
     setIsConnected(false);
@@ -551,42 +563,61 @@ export default function MetaMaskApp() {
     toast.warning(t('toast.processStopped'));
   };
 
-  useEffect(() => {
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length === 0) {
-          disconnectWallet();
-        } else {
-          setAccount(accounts[0]);
-          addLog(`Account changed: ${accounts[0]}`, 'info');
-        }
-      };
+useEffect(() => {
+  let mounted = true;
 
-      const handleChainChanged = async (chainId: string) => {
-        setCurrentChainId(chainId);
-        const isBase = chainId === BASE_NETWORK.chainId;
-        setIsOnBaseNetwork(isBase);
-        
-        if (isBase) {
-          addLog('Switched to Base network', 'success');
-          toast.success(t('toast.networkSwitched'));
-        } else {
-          addLog(`Network changed (Chain ID: ${chainId}). Please switch to Base network.`, 'warning');
-          toast.warning(t('toast.switchToBase'));
-        }
-      };
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
-
-      return () => {
-        if (window.ethereum) {
-          window.ethereum.removeAllListeners('accountsChanged');
-          window.ethereum.removeAllListeners('chainChanged');
-        }
-      };
+  (async () => {
+    try {
+      // Farcaster mini app içindeysek otomatik bağlan
+      if (typeof (globalThis as any).ethereum !== 'undefined') {
+        await connectWallet();
+      } else {
+        addLog('No ethereum provider detected, skip auto-connect', 'info');
+      }
+    } catch (e: any) {
+      addLog(`Auto-connect error: ${e?.message || e}`, 'error');
     }
-  }, [t]);
+  })();
+
+  // Hesap ve ağ değişikliklerini dinle
+  if ((globalThis as any).ethereum) {
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else {
+        setAccount(accounts[0]);
+        addLog(`Account changed: ${accounts[0]}`, 'info');
+      }
+    };
+
+    const handleChainChanged = async (chainId: string) => {
+      setCurrentChainId(chainId);
+      const isBase = chainId === BASE_NETWORK.chainId;
+      setIsOnBaseNetwork(isBase);
+      if (isBase) {
+        addLog('Switched to Base network', 'success');
+      } else {
+        addLog(`Network changed: ${chainId}`, 'warning');
+      }
+    };
+
+    (globalThis as any).ethereum.on('accountsChanged', handleAccountsChanged);
+    (globalThis as any).ethereum.on('chainChanged', handleChainChanged);
+
+    return () => {
+      mounted = false;
+      try {
+        (globalThis as any).ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        (globalThis as any).ethereum.removeListener('chainChanged', handleChainChanged);
+      } catch (_) {}
+    };
+  }
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
 
   const getLogTypeColor = (type: LogEntry['type']) => {
     switch (type) {
