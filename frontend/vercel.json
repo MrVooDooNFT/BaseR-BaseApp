@@ -1,16 +1,1 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "headers": [
-    {
-      "source": "/.well-known/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" },
-        { "key": "Content-Type", "value": "application/json; charset=utf-8" }
-      ]
-    }
-  ],
-  "ignoreCommand": false,
-  "rewrites": [
-    { "source": "/((?!\\.well-known).*)", "destination": "/index.html" }
-  ]
-}
+{ "rewrites": [ { "source": "/(.*)", "destination": "/index.html" } ] }
