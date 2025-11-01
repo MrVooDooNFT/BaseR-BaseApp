@@ -578,11 +578,13 @@ useEffect(() => {
       if (cancelled) return;
 
       addLog("Checking accounts…", "info");
-      let accounts: string[] = await sdk.wallet.request({ method: "eth_accounts" });
+      const eth = sdk.wallet.getEthereumProvider();
+      let accounts: string[] = await eth.request({ method: "eth_accounts" });
 
       if (!accounts || !accounts[0]) {
         addLog("Requesting accounts…", "info");
-        accounts = await sdk.wallet.request({ method: "eth_requestAccounts" });
+        accounts = await eth.request({ method: "eth_requestAccounts" });
+
       }
       if (!accounts || !accounts[0]) {
         addLog("No account returned", "error");
@@ -592,10 +594,11 @@ useEffect(() => {
       setAddress(accounts[0]);
       addLog("Connected: " + accounts[0], "success");
 
-      await sdk.wallet.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: "0x2105" }]
+      await eth.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0x2105" }]
       });
+
       addLog("Switched to Base", "success");
     } catch (e: any) {
       addLog(`Auto-connect error: ${e?.message || String(e)}`, "error");
