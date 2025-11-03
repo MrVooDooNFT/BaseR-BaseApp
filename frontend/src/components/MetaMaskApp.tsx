@@ -601,17 +601,6 @@ if (pingReceipt && pingReceipt.status === '0x1') {
   addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
 }
 
-
-// Yeni bekleme sistemi (provider + public race)
-const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
-
-if (pingReceipt && pingReceipt.status === '0x1') {
-  addLog(`Clone ${i} - Ping ${j} successful`, 'success');
-  addLog(`Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(pingReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-} else {
-  addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
-}
-
                 } catch (pingError: any) {
                   addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
                 }
