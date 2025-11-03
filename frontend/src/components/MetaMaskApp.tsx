@@ -44,17 +44,28 @@ async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs =
 }
 // --- Pre-wait & retry helper for eth_sendTransaction ---
 async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
-  await new Promise(r => setTimeout(r, 700)); // pre-wait: modalın render olmasına izin ver
+  // küçük bir gecikme: kullanıcı cüzdan modalını görsün
+  await new Promise(r => setTimeout(r, 700));
+
   try {
-    return await eth.request({ method: "eth_sendTransaction", params: [tx] });
+    // doğrudan Farcaster wallet provider'ına gönder
+    return await eth.request({
+      method: "eth_sendTransaction",
+      params: [tx],
+    });
   } catch (err: any) {
-    if (retries > 0 && (err.message?.includes("rejected") || err.message?.includes("user"))) {
-      await new Promise(r => setTimeout(r, 500)); // kısa gecikme
+    // kullanıcı reddederse kısa bekleme sonrası tekrar dene
+    if (
+      retries > 0 &&
+      (err?.message?.includes("rejected") || err?.message?.includes("user"))
+    ) {
+      await new Promise(r => setTimeout(r, 500));
       return await sendTransactionWithRetry(eth, tx, retries - 1);
     }
     throw err;
   }
 }
+
 
 // --- Provider ve public RPC arasında yarış (hangisi önce dönerse onu alır) ---
 async function waitForReceiptRace(provider: any, txHash: string, timeoutMs = 10000) {
@@ -189,7 +200,7 @@ export default function MetaMaskApp() {
   const [deployedPingers, setDeployedPingers] = useState<string[]>([]);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [connectedWallet, setConnectedWallet] = useState<string>('');
-
+  const [ethProvider, setEthProvider] = useState<any>(null);
   const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
     gasMode: 'wallet',
     minGasCreateClone: 180000,
@@ -647,6 +658,7 @@ useEffect(() => {
       if (cancelled) return;
 
       const eth: any = await sdk.wallet.getEthereumProvider?.();
+      setEthProvider(eth);
       addLog("provider=" + String(!!eth) + " request=" + typeof eth?.request, "info");
       if (!eth || typeof eth.request !== "function") {
         addLog("Ethereum provider not available", "error");
