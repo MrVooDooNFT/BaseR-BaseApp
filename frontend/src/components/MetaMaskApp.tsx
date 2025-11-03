@@ -560,16 +560,16 @@ const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
 
                   const pingGasParams = await calculateGasParams('ping', pingEstimatedGas);
                   
-                  const pingTxHash = await web3Provider.callContract(
-                    cloneAddress,
-                    getFunctionABI(PINGER_ABI),
-                    'ping',
-                    [],
-                    pingGasParams
-                  );
-                  addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
-                  
-// Receipt’i provider + public RPC race sistemiyle bekle
+const pingTxHash = await web3Provider.callContract(
+  cloneAddress,
+  getFunctionABI(PINGER_ABI),
+  'ping',
+  [],
+  pingGasParams
+);
+addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
+
+// Yeni bekleme sistemi (provider + public race)
 const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
 
 if (pingReceipt && pingReceipt.status === '0x1') {
@@ -578,8 +578,7 @@ if (pingReceipt && pingReceipt.status === '0x1') {
 } else {
   addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
 }
-;
-                  }
+
                 } catch (pingError: any) {
                   addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
                 }
