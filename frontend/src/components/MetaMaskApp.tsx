@@ -601,23 +601,6 @@ if (pingReceipt && pingReceipt.status === '0x1') {
   addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
 }
 
-                  
-const pingTx = {
-  from: account,
-  to: cloneAddress,
-  data: "0x5c36b186", // ping() fonksiyonunun selector'ı
-  gas: "0xC350" // yaklaşık 50,000
-};
-
-if (!ethProvider || typeof ethProvider.request !== "function") {
-  addLog("Farcaster provider missing for ping", "error");
-  throw new Error("ethProvider is not ready");
-}
-
-const pingTxHash = await sendTransactionWithRetry(ethProvider, pingTx);
-addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
-
-
 
 // Yeni bekleme sistemi (provider + public race)
 const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
