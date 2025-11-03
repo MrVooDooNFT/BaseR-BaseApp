@@ -585,7 +585,9 @@ const connectWallet = async () => {
           addLog(`Clone ${i} transaction sent to blockchain: ${cloneTxHash}`, 'info');
           
           // Önce mevcut provider ile beklemeyi dene
-const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
+const cloneReceipt = (typeof window !== "undefined" && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
+  ? await waitForReceiptPublicFirst(cloneTxHash, 6000, 700)
+  : await waitForReceiptRace(web3Provider, cloneTxHash);
 
 
           if (cloneReceipt.status === '0x1') {
@@ -637,8 +639,9 @@ addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
 // Yeni bekleme sistemi (provider + public race)
 addLog("Ping wait mode: desktop=public-only", "info");
 const pingReceipt = (typeof window !== "undefined" && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-  ? await waitForReceiptPublic(pingTxHash)   // sadece public, fallback yok
+  ? await waitForReceiptPublicFirst(pingTxHash, 6000, 700)  // 6 sn timeout, 700 ms poll
   : await waitForReceiptRace(web3Provider, pingTxHash);
+
 
 
 
