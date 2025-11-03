@@ -1146,82 +1146,74 @@ useEffect(() => {
           </CardContent>
         </Card>
 
-        {/* Information Section */}
-        <Card className="shadow-lg mt-6 border-blue-200 bg-blue-50/50 dark:bg-blue-950/10 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Info className="h-5 w-5" />
-              {t('info.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <span className="text-blue-600 dark:text-blue-400">🔹</span>
-                <div>
-                  <strong>{t('info.deployedContracts')}</strong> {t('info.deployedContractsDesc')}
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-blue-600 dark:text-blue-400">🔹</span>
-                <div>
-                  <strong>{t('info.transactions')}</strong> {t('info.transactionsDesc')}
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-blue-600 dark:text-blue-400">🔹</span>
-                <div>
-                  <strong>{t('info.uniqueContracts')}</strong> {t('info.uniqueContractsDesc')}
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-blue-600 dark:text-blue-400">🔹</span>
-                <div>
-                  <strong>{t('info.createNFTs')}</strong> {t('info.createNFTsDesc')}
-                </div>
-              </div>
-            </div>
-            
-            <Separator className="bg-blue-200 dark:bg-blue-800" />
-            
-            <div className="space-y-2">
-              <div className="flex items-start gap-2">
-                <span className="text-amber-600 dark:text-amber-400">⚡</span>
-                <div>{t('info.costs')}</div>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-green-600 dark:text-green-400">💬</span>
-                <div>
-                  {t('info.contact')}{' '}
-                  <a 
-                    href="https://x.com/MrVooDooNFT" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-1"
-                  >
-                    @MrVooDooNFT
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+{/* Information Section */}
+<Card className="shadow-lg mt-6 border bg-background">
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2 text-foreground">
+      <Info className="h-5 w-5" />
+      {t('info.title')}
+    </CardTitle>
+  </CardHeader>
 
-        {/* Footer */}
-        <footer className="mt-12 text-center text-sm text-muted-foreground">
-          <p>
-            © 2025. {t('footer.builtWith')} <Heart className="inline h-4 w-4 text-red-500" /> {t('footer.using')}{' '}
-            <a 
-              href="https://caffeine.ai" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              caffeine.ai
-            </a>
-          </p>
-        </footer>
+  <CardContent className="space-y-4 text-sm">
+    <div className="space-y-3">
+      <div className="flex items-start gap-2">
+        <span className="text-muted-foreground">🔹</span>
+        <div className="text-muted-foreground">
+          <strong className="text-foreground">{t('info.deployedContracts')}</strong> {t('info.deployedContractsDesc')}
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-muted-foreground">🔹</span>
+        <div className="text-muted-foreground">
+          <strong className="text-foreground">{t('info.transactions')}</strong> {t('info.transactionsDesc')}
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-muted-foreground">🔹</span>
+        <div className="text-muted-foreground">
+          <strong className="text-foreground">{t('info.uniqueContracts')}</strong> {t('info.uniqueContractsDesc')}
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-muted-foreground">🔹</span>
+        <div className="text-muted-foreground">
+          <strong className="text-foreground">{t('info.createNFTs')}</strong> {t('info.createNFTsDesc')}
+        </div>
+      </div>
+    </div>
+
+    <Separator className="bg-border" />
+
+    <div className="space-y-2">
+      <div className="flex items-start gap-2">
+        <span className="text-muted-foreground">⚡</span>
+        <div className="text-muted-foreground">{t('info.costs')}</div>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-muted-foreground">💬</span>
+        <div className="text-muted-foreground">
+          {t('info.contact')}{' '}
+          <a
+            href="https://x.com/MrVooDooNFT"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+          >
+            @MrVooDooNFT
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
+{/* Footer */}
+<footer className="mt-12 text-center text-sm text-muted-foreground">
+  <p>© 2025.</p>
+</footer>
+
       </div>
     </div>
   );
