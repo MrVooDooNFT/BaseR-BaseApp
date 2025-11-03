@@ -21,6 +21,9 @@ import WalletStats from './WalletStats';
 import NFTMintSection from './NFTMintSection';
 import { useLanguage } from '../contexts/LanguageContext';
 
+let lastPingAt = 0;
+
+
 // --- Base public RPC üzerinden receipt bekleme (fallback) ---
 async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs = 1500) {
   const rpcUrl = "https://mainnet.base.org";
@@ -44,24 +47,30 @@ async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs =
 }
 // --- Pre-wait & retry helper for eth_sendTransaction ---
 async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
-  // küçük bir gecikme: kullanıcı cüzdan modalını görsün
-  await new Promise(r => setTimeout(r, 700));
+  const MIN_PREWAIT = 800;   // modal açılmadan kısa bekleme
+  const MIN_GAP    = 1200;   // ardışık pingler arası boşluk (tarayıcı popup kuyruğu için)
+
+  // Ardışık işlemler arasında boşluk bırak
+  const now = Date.now();
+  const since = now - lastPingAt;
+  if (since < MIN_GAP) {
+    await new Promise(r => setTimeout(r, MIN_GAP - since));
+  }
+
+  // Modalın görünür olması için kısa bekleme
+  await new Promise(r => setTimeout(r, MIN_PREWAIT));
 
   try {
-    // doğrudan Farcaster wallet provider'ına gönder
-    return await eth.request({
-      method: "eth_sendTransaction",
-      params: [tx],
-    });
+    const hash = await eth.request({ method: "eth_sendTransaction", params: [tx] });
+    lastPingAt = Date.now();
+    return hash;
   } catch (err: any) {
-    // kullanıcı reddederse kısa bekleme sonrası tekrar dene
-    if (
-      retries > 0 &&
-      (err?.message?.includes("rejected") || err?.message?.includes("user"))
-    ) {
-      await new Promise(r => setTimeout(r, 500));
+    const msg = String(err?.message || err || "");
+    if (retries > 0 && /reject|user/i.test(msg)) {
+      await new Promise(r => setTimeout(r, 700));
       return await sendTransactionWithRetry(eth, tx, retries - 1);
     }
+    lastPingAt = Date.now();
     throw err;
   }
 }
