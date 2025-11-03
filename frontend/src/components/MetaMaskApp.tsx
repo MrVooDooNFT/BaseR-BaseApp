@@ -42,6 +42,19 @@ async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs =
   }
   throw new Error("Receipt timeout on public RPC");
 }
+// --- Pre-wait & retry helper for eth_sendTransaction ---
+async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
+  await new Promise(r => setTimeout(r, 700)); // pre-wait: modalın render olmasına izin ver
+  try {
+    return await eth.request({ method: "eth_sendTransaction", params: [tx] });
+  } catch (err: any) {
+    if (retries > 0 && (err.message?.includes("rejected") || err.message?.includes("user"))) {
+      await new Promise(r => setTimeout(r, 500)); // kısa gecikme
+      return await sendTransactionWithRetry(eth, tx, retries - 1);
+    }
+    throw err;
+  }
+}
 
 // --- Provider ve public RPC arasında yarış (hangisi önce dönerse onu alır) ---
 async function waitForReceiptRace(provider: any, txHash: string, timeoutMs = 10000) {
@@ -560,14 +573,16 @@ const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
 
                   const pingGasParams = await calculateGasParams('ping', pingEstimatedGas);
                   
-const pingTxHash = await web3Provider.callContract(
-  cloneAddress,
-  getFunctionABI(PINGER_ABI),
-  'ping',
-  [],
-  pingGasParams
-);
+const pingTx = {
+  from: account,
+  to: cloneAddress,
+  data: "0x5c36b186", // ping() fonksiyonunun selector'ı
+  gas: "0xC350" // yaklaşık 50,000
+};
+
+const pingTxHash = await sendTransactionWithRetry(web3Provider.provider, pingTx);
 addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
+
 
 // Yeni bekleme sistemi (provider + public race)
 const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
