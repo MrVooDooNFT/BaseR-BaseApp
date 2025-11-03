@@ -114,4 +114,5 @@
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
+.dark .info-section .text-muted-foreground { color: hsl(220 10% 85%) !important; }
 
