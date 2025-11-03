@@ -113,3 +113,5 @@
 .error-gradient {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
+.dark .text-muted-foreground { color: hsl(220 10% 85%) !important; }
+.dark .text-foreground { color: hsl(220 15% 90%) !important; }
