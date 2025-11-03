@@ -593,6 +593,7 @@ const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
               addLog(`Block: ${parseInt(cloneReceipt.blockNumber, 16)}, Gas Used: ${parseInt(cloneReceipt.gasUsed, 16).toLocaleString()}`, 'info');
               
               for (let j = 1; j <= pingsPerClone; j++) {
+              suppressLogsRef.current = true;
                 addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
                 
 try {
@@ -646,6 +647,7 @@ try {
   } else {
     addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
   }
+suppressLogsRef.current = false;
 } catch (pingError: any) {
   suppressLogsRef.current = false;
   addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
