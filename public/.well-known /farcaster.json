@@ -5,7 +5,7 @@
     "iconUrl": "https://base-r-base-app-pcwl.vercel.app/icon.png",
     "homeUrl": "https://base-r-base-app-pcwl.vercel.app",
     "imageUrl": "https://base-r-base-app-pcwl.vercel.app/image.png",
-    "splashImageUrl": "https://base-r-base-app-pcwl.vercel.app/splash.png",
+    "splashImageUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=="
     "splashBackgroundColor": "#6200EA",
     "webhookUrl": "https://base-r-base-app-pcwl.vercel.app/api/webhook",
     "subtitle": "BaseR",
