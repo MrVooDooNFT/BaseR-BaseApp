@@ -635,9 +635,11 @@ addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
 
 
 // Yeni bekleme sistemi (provider + public race)
+addLog("Ping wait mode: desktop=public-only", "info");
 const pingReceipt = (typeof window !== "undefined" && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-  ? await waitForReceiptPublicFirst(pingTxHash, 9000, 1000)   // masaüstü web
-  : await waitForReceiptRace(web3Provider, pingTxHash);       // mobil/diğerleri
+  ? await waitForReceiptPublic(pingTxHash)   // sadece public, fallback yok
+  : await waitForReceiptRace(web3Provider, pingTxHash);
+
 
 
 if (pingReceipt && pingReceipt.status === '0x1') {
