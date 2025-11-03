@@ -1194,15 +1194,16 @@ useEffect(() => {
         <span className="text-muted-foreground">💬</span>
         <div className="text-muted-foreground">
           {t('info.contact')}{' '}
-          <a
-            href="https://x.com/MrVooDooNFT"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline font-medium inline-flex items-center gap-1"
-          >
-            @MrVooDooNFT
-            <ExternalLink className="h-3 w-3" />
-          </a>
+<a
+  href="https://farcaster.xyz/mrvoodoo"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-purple-500 hover:underline font-medium inline-flex items-center gap-1"
+>
+  @MrVooDoo
+  <ExternalLink className="h-3 w-3" />
+</a>
+
         </div>
       </div>
     </div>
