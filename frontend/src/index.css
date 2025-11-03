@@ -115,6 +115,17 @@
 }
 
 .dark .info-section .text-foreground { color: hsl(220 15% 90%) !important; }
+      
+        #nft-handle {
+  color: oklch(var(--foreground)) !important; /* yazı rengi */
+  background-color: oklch(var(--background)) !important; /* zemin */
+  border-color: oklch(var(--input)) !important; /* kenarlık */
+}
+
+#nft-handle::placeholder {
+  color: oklch(var(--muted-foreground)) !important; /* placeholder rengi */
+}
+
 
 
 
