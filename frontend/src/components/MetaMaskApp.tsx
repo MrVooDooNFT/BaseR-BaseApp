@@ -43,6 +43,28 @@ async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs =
   throw new Error("Receipt timeout on public RPC");
 }
 
+// --- Provider ve public RPC arasında yarış (hangisi önce dönerse onu alır) ---
+async function waitForReceiptRace(provider: any, txHash: string, timeoutMs = 10000) {
+  const providerPromise = (async () => {
+    try {
+      return await Promise.race([
+        provider.waitForTransaction(txHash),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("provider_timeout")), timeoutMs)
+        ),
+      ]);
+    } catch {
+      return null;
+    }
+  })();
+
+  const publicPromise = waitForReceiptPublic(txHash);
+
+  // İki beklemeyi aynı anda başlat — hangisi önce receipt dönerse onu al
+  const result = await Promise.race([providerPromise, publicPromise]);
+  if (!result) throw new Error("Receipt not found (both failed)");
+  return result;
+}
 
 // Base Network Configuration
 const BASE_NETWORK = {
@@ -513,17 +535,8 @@ const connectWallet = async () => {
           addLog(`Clone ${i} transaction sent to blockchain: ${cloneTxHash}`, 'info');
           
           // Önce mevcut provider ile beklemeyi dene
-let cloneReceipt: any = null;
-try {
-  cloneReceipt = await web3Provider.waitForTransaction(cloneTxHash);
-} catch (e: any) {
-  addLog("Provider wait failed, switching to public RPC", "warning");
-}
+const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
 
-// Provider bekleyemediyse public RPC fallback
-if (!cloneReceipt) {
-  cloneReceipt = await waitForReceiptPublic(cloneTxHash); // <= 1–3 dk arası poll eder
-}
 
           if (cloneReceipt.status === '0x1') {
             const cloneAddress = extractCloneAddress(cloneReceipt);
@@ -556,12 +569,16 @@ if (!cloneReceipt) {
                   );
                   addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
                   
-                  const pingReceipt = await web3Provider.waitForTransaction(pingTxHash);
-                  if (pingReceipt.status === '0x1') {
-                    addLog(`Clone ${i} - Ping ${j} successful`, 'success');
-                    addLog(`Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(pingReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-                  } else {
-                    addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
+// Receipt’i provider + public RPC race sistemiyle bekle
+const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
+
+if (pingReceipt && pingReceipt.status === '0x1') {
+  addLog(`Clone ${i} - Ping ${j} successful`, 'success');
+  addLog(`Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(pingReceipt.gasUsed, 16).toLocaleString()}`, 'info');
+} else {
+  addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
+}
+;
                   }
                 } catch (pingError: any) {
                   addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
