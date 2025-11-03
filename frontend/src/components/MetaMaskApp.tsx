@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Button } from '@/components/ui/button';
+import { ethers } from "ethers";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
