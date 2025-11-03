@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Button } from '@/components/ui/button';
-import { ethers } from "ethers";
+import { Web3Provider } from "../lib/web3";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -603,10 +603,11 @@ useEffect(() => {
       addLog("Connected: " + accounts[0], "success");
 
       // Provider ve network state'lerini güncelle
-      const provider = new ethers.providers.Web3Provider(eth);
+      const provider = new Web3Provider(eth);
       setWeb3Provider(provider);
       setIsConnected(true);
       setIsOnBaseNetwork(true);
+
 
     } catch (e: any) {
       addLog(`Auto-connect error: ${e?.message || String(e)}`, "error");
