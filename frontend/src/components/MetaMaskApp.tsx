@@ -597,11 +597,16 @@ useEffect(() => {
         return;
       }
 
-      // setAddress yerine setAccount
+      // Farcaster bağlantısı tamamlandı
       setAccount(accounts[0]);
       addLog("Connected: " + accounts[0], "success");
 
-      // Not: Farcaster cüzdan zaten Base'te, chain switch yok.
+      // Provider ve network state'lerini güncelle
+      const provider = new ethers.providers.Web3Provider(eth);
+      setWeb3Provider(provider);
+      setIsConnected(true);
+      setIsOnBaseNetwork(true);
+
     } catch (e: any) {
       addLog(`Auto-connect error: ${e?.message || String(e)}`, "error");
       console.error(e);
