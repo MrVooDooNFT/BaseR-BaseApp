@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import WalletStats from './WalletStats';
 import NFTMintSection from './NFTMintSection';
 import { useLanguage } from '../contexts/LanguageContext';
+const IS_DESKTOP = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 
 // --- Base public RPC üzerinden receipt bekleme (fallback) ---
 async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs = 1500) {
@@ -574,6 +576,13 @@ const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
                 addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
                 
                 try {
+                  // Sadece masaüstü mini app için küçük ısınma
+if (IS_DESKTOP) {
+  try { await sdk.actions.ready?.(); } catch {}
+  try { await ethProvider?.request?.({ method: "eth_chainId" }); } catch {}
+  await new Promise(r => setTimeout(r, 400)); // çok kısa bekleme
+}
+
                   let pingEstimatedGas: number | undefined;
                   try {
                     pingEstimatedGas = await web3Provider.estimateGas(cloneAddress, getFunctionABI(PINGER_ABI), 'ping', []);
