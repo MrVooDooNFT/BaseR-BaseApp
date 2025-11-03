@@ -591,8 +591,14 @@ const pingTx = {
   gas: "0xC350" // yaklaşık 50,000
 };
 
-const pingTxHash = await sendTransactionWithRetry(web3Provider.provider, pingTx);
+if (!ethProvider || typeof ethProvider.request !== "function") {
+  addLog("Farcaster provider missing for ping", "error");
+  throw new Error("ethProvider is not ready");
+}
+
+const pingTxHash = await sendTransactionWithRetry(ethProvider, pingTx);
 addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
+
 
 
 // Yeni bekleme sistemi (provider + public race)
