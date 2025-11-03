@@ -6,7 +6,7 @@
     :root {
         --radius: 0.625rem;
         --background: 0.98 0.02 240;
-        --foreground: 0.15 0.02 240;
+        --foreground: 220 20% 15%;
         --card: 1 0 0;
         --card-foreground: 0.15 0.02 240;
         --popover: 1 0 0;
