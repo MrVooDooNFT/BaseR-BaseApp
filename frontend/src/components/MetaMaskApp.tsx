@@ -788,13 +788,6 @@ useEffect(() => {
           </p>
         </header>
 
-        {/* Security Notice */}
-        <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950/20">
-          <AlertTriangle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
-            <strong>{t('security.title')}</strong> {t('security.message')}
-          </AlertDescription>
-        </Alert>
 
         {/* Network Warning */}
         {web3Provider && !isOnBaseNetwork && (
