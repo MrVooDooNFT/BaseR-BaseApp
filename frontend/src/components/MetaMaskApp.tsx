@@ -21,6 +21,29 @@ import WalletStats from './WalletStats';
 import NFTMintSection from './NFTMintSection';
 import { useLanguage } from '../contexts/LanguageContext';
 
+// --- Base public RPC üzerinden receipt bekleme (fallback) ---
+async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs = 1500) {
+  const rpcUrl = "https://mainnet.base.org";
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const res = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "eth_getTransactionReceipt",
+        params: [txHash]
+      })
+    });
+    const json = await res.json();
+    if (json?.result) return json.result; // receipt bulundu
+    await new Promise(r => setTimeout(r, pollMs));
+  }
+  throw new Error("Receipt timeout on public RPC");
+}
+
+
 // Base Network Configuration
 const BASE_NETWORK = {
   chainId: '0x2105', // 8453 in hex
@@ -489,7 +512,19 @@ const connectWallet = async () => {
           );
           addLog(`Clone ${i} transaction sent to blockchain: ${cloneTxHash}`, 'info');
           
-          const cloneReceipt = await web3Provider.waitForTransaction(cloneTxHash);
+          // Önce mevcut provider ile beklemeyi dene
+let cloneReceipt: any = null;
+try {
+  cloneReceipt = await web3Provider.waitForTransaction(cloneTxHash);
+} catch (e: any) {
+  addLog("Provider wait failed, switching to public RPC", "warning");
+}
+
+// Provider bekleyemediyse public RPC fallback
+if (!cloneReceipt) {
+  cloneReceipt = await waitForReceiptPublic(cloneTxHash); // <= 1–3 dk arası poll eder
+}
+
           if (cloneReceipt.status === '0x1') {
             const cloneAddress = extractCloneAddress(cloneReceipt);
             if (cloneAddress) {
