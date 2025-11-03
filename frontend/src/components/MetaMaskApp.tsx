@@ -574,15 +574,33 @@ const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
                 addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
                 
                 try {
-                  let pingEstimatedGas: number | undefined;
-                  try {
-                    pingEstimatedGas = await web3Provider.estimateGas(cloneAddress, getFunctionABI(PINGER_ABI), 'ping', []);
-                    addLog(`Gas estimate for clone ${i} - ping ${j}: ${pingEstimatedGas.toLocaleString()}`, 'info');
-                  } catch (estimateError: any) {
-                    addLog(`Ping gas estimation failed, using minimum value: ${estimateError.message}`, 'warning');
-                  }
+// Farcaster provider kontrolü
+if (!ethProvider || typeof ethProvider.request !== "function") {
+  addLog("Farcaster provider missing for ping", "error");
+  throw new Error("ethProvider is not ready");
+}
 
-                  const pingGasParams = await calculateGasParams('ping', pingEstimatedGas);
+// Minimal TX: modal hemen açılsın, ücretleri cüzdan belirlesin
+const pingTx = {
+  from: account,
+  to: cloneAddress,
+  data: "0x5c36b186" // ping()
+  // istersen gas: "0xC350"
+};
+
+// Pre-wait + retry ile gönder
+const pingTxHash = await sendTransactionWithRetry(ethProvider, pingTx);
+addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
+
+// Receipt bekleme: provider + public race
+const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
+if (pingReceipt && pingReceipt.status === '0x1') {
+  addLog(`Clone ${i} - Ping ${j} successful`, 'success');
+  addLog(`Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(pingReceipt.gasUsed, 16).toLocaleString()}`, 'info');
+} else {
+  addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
+}
+
                   
 const pingTx = {
   from: account,
