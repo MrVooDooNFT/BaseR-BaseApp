@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Button } from '@/components/ui/button';
 import { Web3Provider } from "../lib/web3";
@@ -21,9 +21,6 @@ import WalletStats from './WalletStats';
 import NFTMintSection from './NFTMintSection';
 import { useLanguage } from '../contexts/LanguageContext';
 
-let lastPingAt = 0;
-
-
 // --- Base public RPC üzerinden receipt bekleme (fallback) ---
 async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs = 1500) {
   const rpcUrl = "https://mainnet.base.org";
@@ -45,46 +42,30 @@ async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs =
   }
   throw new Error("Receipt timeout on public RPC");
 }
-// Tarayıcı tespiti (mobilde ısıtma yapmayacağız)
-const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-// --- Pre-wait + warmup + gap + retry helper ---
+// --- Pre-wait & retry helper for eth_sendTransaction ---
 async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
-  const MIN_PREWAIT = 400;   // modal öncesi kısa bekleme
-  const MIN_GAP    = 1200;   // ardışık pingler arası boşluk (sadece tarayıcıda kritik)
-
-  // Ardışık işlemler arasında boşluk
-  const now = Date.now();
-  const since = now - lastPingAt;
-  if (since < MIN_GAP) {
-    await new Promise(r => setTimeout(r, MIN_GAP - since));
-  }
-
-  // **Tarayıcıda** popup’ı ısıt: hafif bir request ile provider’ı uyandır
-  if (!IS_MOBILE) {
-    try {
-      await eth.request({ method: "eth_chainId" });
-    } catch (_) {}
-  }
-
-  // Modalın stabil açılması için kısa bekleme
-  await new Promise(r => setTimeout(r, MIN_PREWAIT));
+  // küçük bir gecikme: kullanıcı cüzdan modalını görsün
+  await new Promise(r => setTimeout(r, 700));
 
   try {
-    const hash = await eth.request({ method: "eth_sendTransaction", params: [tx] });
-    lastPingAt = Date.now();
-    return hash;
+    // doğrudan Farcaster wallet provider'ına gönder
+    return await eth.request({
+      method: "eth_sendTransaction",
+      params: [tx],
+    });
   } catch (err: any) {
-    const msg = String(err?.message || err || "");
-    if (retries > 0 && /reject|user/i.test(msg)) {
-      // erken kapanma vb. durumlar için tek tekrar
-      await new Promise(r => setTimeout(r, 700));
+    // kullanıcı reddederse kısa bekleme sonrası tekrar dene
+    if (
+      retries > 0 &&
+      (err?.message?.includes("rejected") || err?.message?.includes("user"))
+    ) {
+      await new Promise(r => setTimeout(r, 500));
       return await sendTransactionWithRetry(eth, tx, retries - 1);
     }
-    lastPingAt = Date.now();
     throw err;
   }
 }
+
 
 // --- Provider ve public RPC arasında yarış (hangisi önce dönerse onu alır) ---
 async function waitForReceiptRace(provider: any, txHash: string, timeoutMs = 10000) {
@@ -220,8 +201,6 @@ export default function MetaMaskApp() {
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [connectedWallet, setConnectedWallet] = useState<string>('');
   const [ethProvider, setEthProvider] = useState<any>(null);
-  const suppressLogsRef = useRef(false);
-  const pingPendingRef  = useRef(false);
   const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
     gasMode: 'wallet',
     minGasCreateClone: 180000,
@@ -236,8 +215,6 @@ export default function MetaMaskApp() {
   const clearLogsMutation = useClearLogs();
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
-    return; // 👈 bunu buraya ekle (if’in ÜSTÜNE)
-    if (suppressLogsRef.current) return;
     const now = new Date();
     const logEntry: LogEntry = {
       id: Date.now().toString(),
@@ -594,68 +571,49 @@ const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
               addLog(`Block: ${parseInt(cloneReceipt.blockNumber, 16)}, Gas Used: ${parseInt(cloneReceipt.gasUsed, 16).toLocaleString()}`, 'info');
               
               for (let j = 1; j <= pingsPerClone; j++) {
-              suppressLogsRef.current = true;
                 addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
                 
-try {
-  if (pingPendingRef.current) {
-    addLog(`Ping already pending, skipping duplicate`, 'warning');
-    continue;
-  }
+                try {
+                  let pingEstimatedGas: number | undefined;
+                  try {
+                    pingEstimatedGas = await web3Provider.estimateGas(cloneAddress, getFunctionABI(PINGER_ABI), 'ping', []);
+                    addLog(`Gas estimate for clone ${i} - ping ${j}: ${pingEstimatedGas.toLocaleString()}`, 'info');
+                  } catch (estimateError: any) {
+                    addLog(`Ping gas estimation failed, using minimum value: ${estimateError.message}`, 'warning');
+                  }
 
-  // 🔇 Onay modali açılmadan önce: logları sustur ve re-entry kilidi
-  pingPendingRef.current = true;
-  suppressLogsRef.current = true;
+                  const pingGasParams = await calculateGasParams('ping', pingEstimatedGas);
+                  
+const pingTx = {
+  from: account,
+  to: cloneAddress,
+  data: "0x5c36b186", // ping() fonksiyonunun selector'ı
+  gas: "0xC350" // yaklaşık 50,000
+};
 
-  // Farcaster provider kontrolü
-  if (!ethProvider || typeof ethProvider.request !== "function") {
-    suppressLogsRef.current = false;
-    pingPendingRef.current = false;
-    addLog("Farcaster provider missing for ping", "error");
-    throw new Error("ethProvider is not ready");
-  }
-
-  // Minimal TX: modal hemen açılsın, ücretleri cüzdan belirlesin
-  const pingTx = {
-    from: account,
-    to: cloneAddress,
-    data: "0x5c36b186" // ping()
-  };
-
-  // 👇 cüzdan popup'ı açılmadan önce 1sn gecikme (tarayıcı için kritik)
-  await new Promise(r => setTimeout(r, 1000));
-
-  // ✅ Cüzdan onayı sırasında log basma kapalı
-  const pingTxHash = await sendTransactionWithRetry(ethProvider, pingTx);
-
-  // 🔊 Modal kapandıktan sonra logları geri aç
-  suppressLogsRef.current = false;
-
-  addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
-  addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
-
-  // Receipt bekleme: provider + public race
-  const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
-  if (pingReceipt && pingReceipt.status === '0x1') {
-    addLog(`Clone ${i} - Ping ${j} successful`, 'success');
-    addLog(
-      `Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(
-        pingReceipt.gasUsed,
-        16
-      ).toLocaleString()}`,
-      'info'
-    );
-  } else {
-    addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
-  }
-suppressLogsRef.current = false;
-} catch (pingError: any) {
-  suppressLogsRef.current = false;
-  addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
-} finally {
-  pingPendingRef.current = false;
+if (!ethProvider || typeof ethProvider.request !== "function") {
+  addLog("Farcaster provider missing for ping", "error");
+  throw new Error("ethProvider is not ready");
 }
 
+const pingTxHash = await sendTransactionWithRetry(ethProvider, pingTx);
+addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
+
+
+
+// Yeni bekleme sistemi (provider + public race)
+const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
+
+if (pingReceipt && pingReceipt.status === '0x1') {
+  addLog(`Clone ${i} - Ping ${j} successful`, 'success');
+  addLog(`Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(pingReceipt.gasUsed, 16).toLocaleString()}`, 'info');
+} else {
+  addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
+}
+
+                } catch (pingError: any) {
+                  addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
+                }
               }
             } else {
               addLog(`Clone ${i} created but address could not be extracted`, 'warning');
