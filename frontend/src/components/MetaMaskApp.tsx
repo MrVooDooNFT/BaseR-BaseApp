@@ -91,6 +91,30 @@ async function waitForReceiptRace(provider: any, txHash: string, timeoutMs = 100
   if (!result) throw new Error("Receipt not found (both failed)");
   return result;
 }
+// --- Public-first bekleme (masaüstünde ping için hızlı) ---
+async function waitForReceiptPublicFirst(txHash: string, publicTimeoutMs = 9000, pollMs = 1000) {
+  const rpcUrl = "https://mainnet.base.org";
+  const t0 = Date.now();
+  while (Date.now() - t0 < publicTimeoutMs) {
+    try {
+      const res = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_getTransactionReceipt",
+          params: [txHash]
+        })
+      });
+      const json = await res.json();
+      if (json?.result) return json.result;
+    } catch {}
+    await new Promise(r => setTimeout(r, pollMs));
+  }
+  // Public yetişmezse eski race’e dön
+  return await waitForReceiptRace(web3Provider, txHash);
+}
 
 // Base Network Configuration
 const BASE_NETWORK = {
@@ -611,7 +635,10 @@ addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
 
 
 // Yeni bekleme sistemi (provider + public race)
-const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
+const pingReceipt = (typeof window !== "undefined" && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
+  ? await waitForReceiptPublicFirst(pingTxHash, 9000, 1000)   // masaüstü web
+  : await waitForReceiptRace(web3Provider, pingTxHash);       // mobil/diğerleri
+
 
 if (pingReceipt && pingReceipt.status === '0x1') {
   addLog(`Clone ${i} - Ping ${j} successful`, 'success');
