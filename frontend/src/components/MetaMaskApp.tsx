@@ -812,32 +812,6 @@ useEffect(() => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Left Column */}
           <div className="space-y-6">
-            {/* Wallet Connection */}
-            <Card className="border-2 border-primary/20 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wallet className="h-5 w-5" />
-                  {t('wallet.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!isConnected ? (
-                  <Button onClick={connectWallet} className="w-full" size="lg">
-                    <Wallet className="mr-2 h-4 w-4" />
-                    {t('wallet.connect')}
-                  </Button>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm font-mono break-all">{account}</p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={disconnectWallet} className="w-full">
-                      {t('wallet.disconnect')}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
             {/* NFT Mint Section */}
             <NFTMintSection
