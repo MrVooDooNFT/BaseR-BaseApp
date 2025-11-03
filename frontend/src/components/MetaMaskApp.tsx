@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Button } from '@/components/ui/button';
 import { Web3Provider } from "../lib/web3";
@@ -220,6 +220,8 @@ export default function MetaMaskApp() {
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [connectedWallet, setConnectedWallet] = useState<string>('');
   const [ethProvider, setEthProvider] = useState<any>(null);
+  const suppressLogsRef = useRef(false);
+  const pingPendingRef  = useRef(false);
   const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
     gasMode: 'wallet',
     minGasCreateClone: 180000,
@@ -234,6 +236,7 @@ export default function MetaMaskApp() {
   const clearLogsMutation = useClearLogs();
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
+    if (suppressLogsRef.current) return;
     const now = new Date();
     const logEntry: LogEntry = {
       id: Date.now().toString(),
@@ -592,37 +595,64 @@ const cloneReceipt = await waitForReceiptRace(web3Provider, cloneTxHash);
               for (let j = 1; j <= pingsPerClone; j++) {
                 addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
                 
-                try {
-// Farcaster provider kontrolü
-if (!ethProvider || typeof ethProvider.request !== "function") {
-  addLog("Farcaster provider missing for ping", "error");
-  throw new Error("ethProvider is not ready");
+try {
+  if (pingPendingRef.current) {
+    addLog(`Ping already pending, skipping duplicate`, 'warning');
+    continue;
+  }
+
+  // 🔇 Onay modali açılmadan önce: logları sustur ve re-entry kilidi
+  pingPendingRef.current = true;
+  suppressLogsRef.current = true;
+
+  // Farcaster provider kontrolü
+  if (!ethProvider || typeof ethProvider.request !== "function") {
+    suppressLogsRef.current = false;
+    pingPendingRef.current = false;
+    addLog("Farcaster provider missing for ping", "error");
+    throw new Error("ethProvider is not ready");
+  }
+
+  // Minimal TX: modal hemen açılsın, ücretleri cüzdan belirlesin
+  const pingTx = {
+    from: account,
+    to: cloneAddress,
+    data: "0x5c36b186" // ping()
+  };
+
+  // 👇 cüzdan popup'ı açılmadan önce 1sn gecikme (tarayıcı için kritik)
+  await new Promise(r => setTimeout(r, 1000));
+
+  // ✅ Cüzdan onayı sırasında log basma kapalı
+  const pingTxHash = await sendTransactionWithRetry(ethProvider, pingTx);
+
+  // 🔊 Modal kapandıktan sonra logları geri aç
+  suppressLogsRef.current = false;
+
+  addLog(`Clone ${i} (${cloneAddress}) - Sending ping ${j}/${pingsPerClone}...`, 'info');
+  addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
+
+  // Receipt bekleme: provider + public race
+  const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
+  if (pingReceipt && pingReceipt.status === '0x1') {
+    addLog(`Clone ${i} - Ping ${j} successful`, 'success');
+    addLog(
+      `Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(
+        pingReceipt.gasUsed,
+        16
+      ).toLocaleString()}`,
+      'info'
+    );
+  } else {
+    addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
+  }
+} catch (pingError: any) {
+  suppressLogsRef.current = false;
+  addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
+} finally {
+  pingPendingRef.current = false;
 }
 
-// Minimal TX: modal hemen açılsın, ücretleri cüzdan belirlesin
-const pingTx = {
-  from: account,
-  to: cloneAddress,
-  data: "0x5c36b186" // ping()
-  // istersen gas: "0xC350"
-};
-
-// Pre-wait + retry ile gönder
-const pingTxHash = await sendTransactionWithRetry(ethProvider, pingTx);
-addLog(`Clone ${i} - Ping ${j} transaction sent: ${pingTxHash}`, 'info');
-
-// Receipt bekleme: provider + public race
-const pingReceipt = await waitForReceiptRace(web3Provider, pingTxHash);
-if (pingReceipt && pingReceipt.status === '0x1') {
-  addLog(`Clone ${i} - Ping ${j} successful`, 'success');
-  addLog(`Block: ${parseInt(pingReceipt.blockNumber, 16)}, Gas Used: ${parseInt(pingReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-} else {
-  addLog(`Clone ${i} - Ping ${j} transaction failed`, 'error');
-}
-
-                } catch (pingError: any) {
-                  addLog(`Clone ${i} - Ping ${j} error: ${pingError.message}`, 'error');
-                }
               }
             } else {
               addLog(`Clone ${i} created but address could not be extracted`, 'warning');
