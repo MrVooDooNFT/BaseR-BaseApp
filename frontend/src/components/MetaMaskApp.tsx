@@ -236,6 +236,7 @@ export default function MetaMaskApp() {
   const clearLogsMutation = useClearLogs();
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
+    return; // 👈 bunu buraya ekle (if’in ÜSTÜNE)
     if (suppressLogsRef.current) return;
     const now = new Date();
     const logEntry: LogEntry = {
