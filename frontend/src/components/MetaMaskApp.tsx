@@ -45,19 +45,29 @@ async function waitForReceiptPublic(txHash: string, timeoutMs = 180000, pollMs =
   }
   throw new Error("Receipt timeout on public RPC");
 }
-// --- Pre-wait & retry helper for eth_sendTransaction ---
-async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
-  const MIN_PREWAIT = 800;   // modal açılmadan kısa bekleme
-  const MIN_GAP    = 1200;   // ardışık pingler arası boşluk (tarayıcı popup kuyruğu için)
+// Tarayıcı tespiti (mobilde ısıtma yapmayacağız)
+const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Ardışık işlemler arasında boşluk bırak
+// --- Pre-wait + warmup + gap + retry helper ---
+async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
+  const MIN_PREWAIT = 400;   // modal öncesi kısa bekleme
+  const MIN_GAP    = 1200;   // ardışık pingler arası boşluk (sadece tarayıcıda kritik)
+
+  // Ardışık işlemler arasında boşluk
   const now = Date.now();
   const since = now - lastPingAt;
   if (since < MIN_GAP) {
     await new Promise(r => setTimeout(r, MIN_GAP - since));
   }
 
-  // Modalın görünür olması için kısa bekleme
+  // **Tarayıcıda** popup’ı ısıt: hafif bir request ile provider’ı uyandır
+  if (!IS_MOBILE) {
+    try {
+      await eth.request({ method: "eth_chainId" });
+    } catch (_) {}
+  }
+
+  // Modalın stabil açılması için kısa bekleme
   await new Promise(r => setTimeout(r, MIN_PREWAIT));
 
   try {
@@ -67,6 +77,7 @@ async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
   } catch (err: any) {
     const msg = String(err?.message || err || "");
     if (retries > 0 && /reject|user/i.test(msg)) {
+      // erken kapanma vb. durumlar için tek tekrar
       await new Promise(r => setTimeout(r, 700));
       return await sendTransactionWithRetry(eth, tx, retries - 1);
     }
@@ -74,7 +85,6 @@ async function sendTransactionWithRetry(eth: any, tx: any, retries = 1) {
     throw err;
   }
 }
-
 
 // --- Provider ve public RPC arasında yarış (hangisi önce dönerse onu alır) ---
 async function waitForReceiptRace(provider: any, txHash: string, timeoutMs = 10000) {
