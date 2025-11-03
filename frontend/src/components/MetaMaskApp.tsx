@@ -761,9 +761,7 @@ useEffect(() => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <header className="text-center mb-6">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
-            {t('header.title')}
-          </h1>
+
           
           {/* Language Selector - Button Group */}
           <div className="flex justify-center gap-2 mb-4">
