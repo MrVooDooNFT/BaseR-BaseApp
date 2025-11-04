@@ -446,9 +446,16 @@ const connectWallet = async () => {
       
       addLog(`Deployment transaction sent to blockchain: ${deployTxHash}`, 'info');
       
-      const deployReceipt = await web3Provider.waitForTransaction(deployTxHash);
+     const deployReceipt =
+  await waitForReceiptPublicFirst(deployTxHash, 20000, 900)
+    .catch(() => waitForReceiptRace(web3Provider, deployTxHash));
+      const ok =
+  deployReceipt?.status === '0x1' ||
+  deployReceipt?.status === 1 ||
+  deployReceipt?.status === true;
       
-      if (deployReceipt.status === '0x1' && deployReceipt.contractAddress) {
+if (ok && deployReceipt.contractAddress) {
+
         const contractAddress = deployReceipt.contractAddress;
         setDeployedPingers(prev => [...prev, contractAddress]);
         
