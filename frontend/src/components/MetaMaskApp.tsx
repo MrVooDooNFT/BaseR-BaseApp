@@ -263,7 +263,9 @@ function buildCastFromSummary(sum: { minted: number; deployed: number; clones: n
 
   const text = lines.join("\n").trimEnd();
   const u = new URL("https://warpcast.com/~/compose");
-  u.searchParams.set("text", text);
+ u.searchParams.set("text", text);
+u.searchParams.append("embeds[]", MINIAPP_URL);
+
   return u.toString();
 }
 
