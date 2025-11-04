@@ -239,16 +239,6 @@ export default function MetaMaskApp() {
   const { actor } = useActor();
   const { data: backendLogs, refetch: refetchLogs } = useLogs();
   const clearLogsMutation = useClearLogs();
-const [summary, setSummary] = React.useState({
-  deploys: 0,
-  mints: 0,
-  uniqueClones: 0,
-  pings: 0,
-  lastDeployAt: null as string | null,
-  lastMintAt: null as string | null,
-  lastCloneAt: null as string | null,
-  lastPingAt: null as string | null,
-});
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
     const now = new Date();
@@ -289,47 +279,6 @@ const [summary, setSummary] = React.useState({
       toast.error(t('toast.logsClearFailed'));
     }
   };
-function rebuildSummaryFromLogs(
-  logs: Array<{ type: string; status?: string; timestamp?: string; contract?: string; clone?: string }>
-) {
-  let deploys = 0, mints = 0, pings = 0;
-  const cloneSet = new Set<string>();
-  let lastDeployAt: string | null = null;
-  let lastMintAt: string | null = null;
-  let lastCloneAt: string | null = null;
-  let lastPingAt: string | null = null;
-
-  for (const l of logs) {
-    if (l.type === 'deploy' && l.status === 'success') {
-      deploys++;
-      if (!lastDeployAt || (l.timestamp && l.timestamp > lastDeployAt)) lastDeployAt = l.timestamp || lastDeployAt;
-    }
-    if (l.type === 'mint' && l.status === 'success') {
-      mints++;
-      if (!lastMintAt || (l.timestamp && l.timestamp > lastMintAt)) lastMintAt = l.timestamp || lastMintAt;
-    }
-    if (l.type === 'clone' && (l.status === 'success' || !l.status)) {
-      const key = l.clone || l.contract || '';
-      if (key) cloneSet.add(key);
-      if (!lastCloneAt || (l.timestamp && l.timestamp > lastCloneAt)) lastCloneAt = l.timestamp || lastCloneAt;
-    }
-    if (l.type === 'ping' && l.status === 'success') {
-      pings++;
-      if (!lastPingAt || (l.timestamp && l.timestamp > lastPingAt)) lastPingAt = l.timestamp || lastPingAt;
-    }
-  }
-
-  setSummary({
-    deploys,
-    mints,
-    uniqueClones: cloneSet.size,
-    pings,
-    lastDeployAt,
-    lastMintAt,
-    lastCloneAt,
-    lastPingAt,
-  });
-}
 
   const detectWallet = () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -794,11 +743,6 @@ useEffect(() => {
   return () => { cancelled = true; };
 }, []);
 
-useEffect(() => {
-  if (Array.isArray(logs)) {
-    rebuildSummaryFromLogs(logs);
-  }
-}, [logs]);
 
 
 
@@ -1116,8 +1060,7 @@ useEffect(() => {
             isOnBaseNetwork={isOnBaseNetwork}
           />
         </div>
-{false && (
-  <>
+
         {/* Logs Panel */}
         <Card className="shadow-lg">
           <CardHeader>
@@ -1165,71 +1108,6 @@ useEffect(() => {
             </ScrollArea>
           </CardContent>
         </Card>
-  </>
-)}
-        <section className="mt-6">
-  <h3 className="text-lg font-semibold text-foreground mb-3">Activity Summary</h3>
-
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-    <div className="rounded-lg border bg-background p-4">
-      <div className="text-sm text-muted-foreground">Deploys</div>
-      <div className="text-2xl font-semibold text-foreground">{summary.deploys}</div>
-      {summary.lastDeployAt && <div className="text-xs text-muted-foreground">Last: {summary.lastDeployAt}</div>}
-    </div>
-
-    <div className="rounded-lg border bg-background p-4">
-      <div className="text-sm text-muted-foreground">Mints</div>
-      <div className="text-2xl font-semibold text-foreground">{summary.mints}</div>
-      {summary.lastMintAt && <div className="text-xs text-muted-foreground">Last: {summary.lastMintAt}</div>}
-    </div>
-
-    <div className="rounded-lg border bg-background p-4">
-      <div className="text-sm text-muted-foreground">Unique Clones</div>
-      <div className="text-2xl font-semibold text-foreground">{summary.uniqueClones}</div>
-      {summary.lastCloneAt && <div className="text-xs text-muted-foreground">Last: {summary.lastCloneAt}</div>}
-    </div>
-
-    <div className="rounded-lg border bg-background p-4">
-      <div className="text-sm text-muted-foreground">Pings</div>
-      <div className="text-2xl font-semibold text-foreground">{summary.pings}</div>
-      {summary.lastPingAt && <div className="text-xs text-muted-foreground">Last: {summary.lastPingAt}</div>}
-    </div>
-  </div>
-
-  <div className="mt-4 flex gap-2">
-    <Button variant="outline" className="w-full" onClick={() => Array.isArray(logs) && rebuildSummaryFromLogs(logs)}>
-      Refresh Activity
-    </Button>
-
-    <Button
-      className="w-full"
-      onClick={() => {
-        const lines: string[] = [];
-        if (summary.mints > 0) lines.push(`I created and minted ${summary.mints} NFTs`);
-        if (summary.deploys > 0) lines.push(`I deployed ${summary.deploys} contracts`);
-        if (summary.uniqueClones > 0) lines.push(`I created ${summary.uniqueClones} unique contracts and interacted with them (${summary.pings} pings) times!`);
-        lines.push('With BaseR, ALL FREE!');
-        lines.push('https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser');
-
-        const text = encodeURIComponent(lines.join('\n'));
-        const embed = encodeURIComponent('https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser');
-        const url = `https://warpcast.com/~/compose?text=${text}&embeds[]=${embed}`;
-
-        try {
-          if (sdk?.isInMiniApp?.()) {
-            sdk.actions.openUrl(url);
-          } else {
-            window.open(url, '_blank');
-          }
-        } catch {
-          window.open(url, '_blank');
-        }
-      }}
-    >
-      Cast your BaseR Activity
-    </Button>
-  </div>
-</section>
 
         {/* Contract Information */}
         <Card className="shadow-lg mt-6">
