@@ -125,6 +125,48 @@ class ABIEncoder {
     return value ? '0'.repeat(63) + '1' : '0'.repeat(64);
   }
 }
+// --- Public RPC ile bekleme ---
+async function waitForReceiptPublicFirst(txHash: string, publicTimeoutMs = 12000, pollMs = 800) {
+  const rpcUrl = "https://mainnet.base.org";
+  const t0 = Date.now();
+  while (Date.now() - t0 < publicTimeoutMs) {
+    try {
+      const res = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_getTransactionReceipt",
+          params: [txHash]
+        })
+      });
+      const json = await res.json();
+      if (json?.result) return json.result; // receipt bulundu
+    } catch {}
+    await new Promise(r => setTimeout(r, pollMs));
+  }
+  throw new Error("Receipt timeout on public RPC");
+}
+
+// --- Provider + public yarış ---
+async function waitForReceiptRace(provider: any, txHash: string, timeoutMs = 10000) {
+  const providerPromise = (async () => {
+    try {
+      return await Promise.race([
+        provider.waitForTransaction(txHash),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("provider_timeout")), timeoutMs)),
+      ]);
+    } catch {
+      return null;
+    }
+  })();
+
+  const publicPromise = waitForReceiptPublicFirst(txHash, timeoutMs, 800);
+  const result = await Promise.race([providerPromise, publicPromise]);
+  if (!result) throw new Error("Receipt not found (both failed)");
+  return result;
+}
 
 export default function NFTMintSection({ 
   web3Provider, 
@@ -212,9 +254,18 @@ export default function NFTMintSection({
       onLog(`NFT minting transaction sent: ${txHash}`, 'info');
       toast.info('Transaction sent! Waiting for confirmation...');
 
-      const receipt = await web3Provider.waitForTransaction(txHash);
+     const receipt =
+  await waitForReceiptPublicFirst(txHash, 12000, 800)
+    .catch(() => waitForReceiptRace(web3Provider, txHash));
 
-      if (receipt.status === '0x1') {
+// status normalizasyonu
+const ok =
+  receipt?.status === '0x1' ||
+  receipt?.status === 1 ||
+  receipt?.status === true;
+
+     if (ok) {
+
         const gasUsed = parseInt(receipt.gasUsed, 16).toLocaleString();
         
         onLog(`✓ NFT collection successfully minted!`, 'success');
