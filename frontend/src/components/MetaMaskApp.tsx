@@ -326,7 +326,7 @@ const logEntry: LogEntry = {
     // Mini App içindeyse composer içinde embed'i göster
 await sdk.actions.composeCast({
   text,
-  embedsOpenGraphUrls: ["https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser"], // ✅ doğru parametre
+  embeds: ["https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser"],
 });
 
   } catch {
