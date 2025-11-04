@@ -1060,7 +1060,8 @@ useEffect(() => {
             isOnBaseNetwork={isOnBaseNetwork}
           />
         </div>
-
+{false && (
+  <>
         {/* Logs Panel */}
         <Card className="shadow-lg">
           <CardHeader>
@@ -1145,7 +1146,8 @@ useEffect(() => {
             )}
           </CardContent>
         </Card>
-
+  </>
+)}
 {/* Information Section */}
 <Card className="shadow-lg mt-6 border bg-background">
   <CardHeader>
