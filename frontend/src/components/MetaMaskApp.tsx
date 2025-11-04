@@ -251,7 +251,7 @@ const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
 
 // İngilizce metni üretir ve Warpcast compose linkini verir
 function buildCastFromSummary(sum: { minted: number; deployed: number; clones: number; pings: number }) {
-  const urlLine = MINIAPP_URL.trim(); // linkte gizli boşluk varsa kes
+const urlLine = MINIAPP_URL.trim(); // linkte gizli boşluk varsa kes
 const lines = [
   `I minted ${sum.minted} NFTs with BaseR.`,
   `Deployed ${sum.deployed} smart contracts.`,
@@ -270,10 +270,6 @@ const text = lines
 
 u.searchParams.set("text", text);
 
-
-  const text = lines.join("\n").trimEnd();
-  const u = new URL("https://warpcast.com/~/compose");
-  u.searchParams.set("text", text);
   return u.toString();
 }
 
