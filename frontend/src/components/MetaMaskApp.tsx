@@ -365,13 +365,7 @@ const logEntry: LogEntry = {
       window.open(u.toString(), "_blank", "noopener,noreferrer");
     }
   }
-};
 
-const handleShareActivities = () => {
-  const sum = summarizeActivities(logs);
-  const composeUrl = buildCastFromSummary(sum);
-  openWarpcastCompose(composeUrl);
-};
 
   const clearLogs = async () => {
     try {
