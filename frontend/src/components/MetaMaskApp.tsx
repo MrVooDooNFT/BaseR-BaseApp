@@ -209,6 +209,67 @@ interface AdvancedSettings {
   priority: number;
   gasBuffer: number;
 }
+// ---- Parse & compose helpers ----
+
+// Bu kalıplar mevcut log mesajlarına göre ayarlı:
+const MINT_OK_RE = /✓ NFT collection successfully minted!/i; // 
+const PINGER_DEPLOY_OK_RE = /✓ Real Pinger contract successfully deployed: /i; // :contentReference[oaicite:1]{index=1}
+const CLONE_OK_RE = /Clone\s+\d+\s+successfully created:/i; // :contentReference[oaicite:2]{index=2}
+const PING_OK_RE = /Ping\s+\d+\s+successful/i; // :contentReference[oaicite:3]{index=3}
+
+function summarizeActivities(logs: { message: string }[]) {
+  let minted = 0;
+  let deployed = 0;
+  const uniqueClones = new Set<string>();
+  let pings = 0;
+
+  for (const l of logs) {
+    const m = l.message || "";
+    if (MINT_OK_RE.test(m)) minted++;
+
+    if (PINGER_DEPLOY_OK_RE.test(m)) deployed++;
+
+    if (CLONE_OK_RE.test(m)) {
+      // Adresi satırdan çekmeye çalış (varsa benzersiz sayalım)
+      // Örn: "Clone 1 successfully created: 0xABC..."
+      const addr = (m.match(/0x[0-9a-fA-F]{40}/)?.[0] || m).toLowerCase();
+      uniqueClones.add(addr);
+    }
+
+    if (PING_OK_RE.test(m)) pings++;
+  }
+
+  return {
+    minted,
+    deployed,
+    clones: uniqueClones.size, // uniq clone sayısı
+    pings,
+  };
+}
+
+const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
+
+// İngilizce metni üretir ve Warpcast compose linkini verir
+function buildCastFromSummary(sum: { minted: number; deployed: number; clones: number; pings: number }) {
+  const lines = [
+    `I minted ${sum.minted} NFTs with BaseR.`,
+    `Deployed ${sum.deployed} smart contracts.`,
+    `Created and interacted with ${sum.clones} unique contracts.`,
+    `Sent ${sum.pings} pings.`,
+    `All completely free!`,
+    "",
+    MINIAPP_URL, // link en sonda
+  ];
+
+  const text = lines.join("\n");
+  const u = new URL("https://warpcast.com/~/compose");
+  u.searchParams.set("text", text);
+  return u.toString();
+}
+
+function openWarpcastCompose(url: string) {
+  if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
+}
 
 export default function MetaMaskApp() {
   const { t, language, setLanguage } = useLanguage();
@@ -260,6 +321,11 @@ const logEntry: LogEntry = {
       actor.addLog(`[${fullTimestamp}] [${type.toUpperCase()}] ${message}`).catch(console.error);
     }
   };
+const handleShareActivities = () => {
+  const sum = summarizeActivities(logs);
+  const composeUrl = buildCastFromSummary(sum);
+  openWarpcastCompose(composeUrl);
+};
 
   const clearLogs = async () => {
     try {
@@ -1088,6 +1154,15 @@ useEffect(() => {
                 <Trash2 className="h-4 w-4" />
                 {clearLogsMutation.isPending ? t('logs.clearing') : t('logs.clear')}
               </Button>
+              <Button 
+  onClick={handleShareActivities}
+  variant="outline"
+  size="sm"
+  className="ml-2"
+>
+  Prepare Cast from Activities
+</Button>
+
             </div>
           </CardHeader>
           <CardContent>
