@@ -251,22 +251,21 @@ const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
 
 // İngilizce metni üretir ve Warpcast compose linkini verir
 function buildCastFromSummary(sum: { minted: number; deployed: number; clones: number; pings: number }) {
-  const lines = [
-    `I minted ${sum.minted} NFTs with BaseR.`,
-    `Deployed ${sum.deployed} smart contracts.`,
-    `Created and interacted with ${sum.clones} unique contracts.`,
-    `Sent ${sum.pings} pings.`,
-    `All completely free!`,
-    "",
-    MINIAPP_URL, // link en sonda
-  ];
+const lines = [
+  `I minted ${sum.minted} NFTs with BaseR.`,
+  `Deployed ${sum.deployed} smart contracts.`,
+  `Created and interacted with ${sum.clones} unique contracts.`,
+  `Sent ${sum.pings} pings.`,
+  `All completely free!`
+];
 
-  const text = lines.join("\n").trimEnd();
-  const u = new URL("https://warpcast.com/~/compose");
- u.searchParams.set("text", text);
-u.searchParams.append("embeds[]", MINIAPP_URL);
+const text = lines.join("\n").trimEnd();
 
-  return u.toString();
+const u = new URL("https://warpcast.com/~/compose");
+u.searchParams.set("text", text);
+u.searchParams.append("embeds[]", MINIAPP_URL); // sadece embed parametresi
+return u.toString();
+
 }
 
 function openWarpcastCompose(url: string) {
