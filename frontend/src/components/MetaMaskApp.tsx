@@ -436,6 +436,10 @@ const connectWallet = async () => {
 
     try {
       const gasParams = await calculateGasParams('deploy', 500000);
+      const signer = await web3Provider.getSigner();
+      const from = await signer.getAddress();
+      const nonce = await web3Provider.getTransactionCount(from, 'pending');
+
       
       const deployTxHash = await web3Provider.deployContract(
         PINGER_ABI,
@@ -445,28 +449,64 @@ const connectWallet = async () => {
       );
       
       addLog(`Deployment transaction sent to blockchain: ${deployTxHash}`, 'info');
-      
-      const deployReceipt = await web3Provider.waitForTransaction(deployTxHash);
-      
-      if (deployReceipt.status === '0x1' && deployReceipt.contractAddress) {
-        const contractAddress = deployReceipt.contractAddress;
-        setDeployedPingers(prev => [...prev, contractAddress]);
-        
-        addLog(`✓ Real Pinger contract successfully deployed: ${contractAddress}`, 'success');
-        addLog(`Block: ${parseInt(deployReceipt.blockNumber, 16)}, Gas Used: ${parseInt(deployReceipt.gasUsed, 16).toLocaleString()}`, 'info');
-        addLog(`Transaction Hash: ${deployTxHash}`, 'info');
-        
-        toast.success(t('toast.deploySuccess'));
-      } else {
-        addLog('Deployment transaction failed', 'error');
-        toast.error(t('toast.deployFailed'));
-      }
-    } catch (error: any) {
-      addLog(`Deployment error: ${error.message}`, 'error');
-      toast.error(t('toast.deployFailed'));
-    } finally {
-      setIsDeploying(false);
+      addLog('Status: pending (waiting for confirmation on Base)', 'info');
+const pollReceipt = async () => {
+  const started = Date.now();
+  while (Date.now() - started < 90_000) {
+    const r = await web3Provider.getTransactionReceipt(deployTxHash);
+    if (r) return r;
+    await new Promise(res => setTimeout(res, 2000));
+  }
+  return null;
+};
+
+const predicted = ethers.getCreateAddress({ from, nonce });
+const pollCode = async () => {
+  const started = Date.now();
+  while (Date.now() - started < 90_000) {
+    const code = await web3Provider.getCode(predicted);
+    if (code && code !== '0x') {
+      return { status: 1, contractAddress: predicted };
     }
+    await new Promise(res => setTimeout(res, 2000));
+  }
+  return null;
+};
+const [byReceipt, byCode] = await Promise.all([pollReceipt(), pollCode()]);
+const resolved: any = byReceipt ?? byCode;
+
+      
+if (resolved && (resolved.status === 1 || resolved.status === '0x1')) {
+  const contractAddress =
+    resolved.contractAddress ??
+    (byReceipt?.contractAddress) ??
+    predicted;
+
+  setDeployedPingers(prev => [...prev, contractAddress]);
+  addLog(`✓ Real Pinger contract successfully deployed: ${contractAddress}`, 'success');
+
+  if (byReceipt) {
+    addLog(`Block: ${parseInt(byReceipt.blockNumber, 16)}, Gas Used: ${parseInt(byReceipt.gasUsed, 16).toLocaleString()}`, 'info');
+  }
+
+  addLog(`Transaction Hash: ${deployTxHash}`, 'info');
+  toast.success(t('toast.deploySuccess'));
+} else {
+  addLog('Still pending (receipt not found yet). It will confirm shortly.', 'info');
+}
+
+} catch (error: any) {
+  const msg = String(error?.message || '').toLowerCase();
+  if (msg.includes('receipt not found')) {
+    addLog('Still pending (RPC delay). Will confirm soon.', 'info');
+  } else {
+    addLog(`Deployment error: ${error.message}`, 'error');
+    toast.error(t('toast.deployFailed'));
+  }
+} finally {
+  setIsDeploying(false);
+}
+
   };
 
   const calculateGasParams = async (methodName: string, estimatedGas?: number) => {
