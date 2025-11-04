@@ -119,19 +119,20 @@
 #nft-handle {
   color: hsl(var(--foreground));
   background-color: hsl(var(--background));
-  border: 1px solid hsl(var(--input));
+  border: 1px solid hsl(220 10% 50%); /* orta koyulukta gri-mavi sınır */
 }
 
 #nft-handle::placeholder {
   color: hsl(var(--muted-foreground));
-  opacity: 1; /* Chrome için */
+  opacity: 1;
 }
 
 #nft-handle:focus {
   outline: none;
-  border-color: hsl(var(--ring));
-  box-shadow: 0 0 0 1px hsl(var(--ring));
+  border-color: hsl(220 20% 60%); /* biraz daha belirgin odak rengi */
+  box-shadow: 0 0 0 1px hsl(220 20% 60%);
 }
+
 
 
 
