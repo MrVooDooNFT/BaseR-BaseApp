@@ -242,16 +242,17 @@ export default function MetaMaskApp() {
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
     const now = new Date();
-    const logEntry: LogEntry = {
-      id: Date.now().toString(),
-      timestamp: now.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit' 
-      }),
-      message,
-      type
-    };
+const logEntry: LogEntry = {
+  id: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+  timestamp: now.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+  }),
+  message,
+  type
+};
+
     setLogs(prev => [...prev, logEntry]);
     
     if (actor) {
@@ -1097,9 +1098,9 @@ useEffect(() => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {logs.map((log, index) => (
-                    <div key={log.id}>
-                      <div className={`p-3 rounded-lg border ${getLogTypeColor(log.type)}`}>
+{logs.map((log, index) => (
+  <div key={`${log.id}-${index}`}>
+    <div className={`p-3 rounded-lg border ${getLogTypeColor(log.type)}`}>
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm flex-1">{log.message}</p>
                           <span className="text-xs opacity-70 whitespace-nowrap">
