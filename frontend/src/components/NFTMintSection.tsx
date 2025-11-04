@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Web3Provider } from '../lib/web3';
 import { useLanguage } from '../contexts/LanguageContext';
 
-const NFT_FACTORY_ADDR = '0xfC92711490c25eBcF73e91CC549007369f0A22F8';
+const NFT_FACTORY_ADDR = '0x5A5aea5bF11BaaF2f3f420C8e694425aC3590c8C';
 
 const NFT_FACTORY_ABI = [
   {
@@ -16,7 +16,7 @@ const NFT_FACTORY_ABI = [
       { "internalType": "string", "name": "handle", "type": "string" },
       { "internalType": "uint256", "name": "amount", "type": "uint256" }
     ],
-    "name": "createMyCollection",
+    "name": "mint",
     "outputs": [{ "internalType": "address", "name": "collection", "type": "address" }],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -37,7 +37,7 @@ class ABIEncoder {
       throw new Error(`Function ${functionName} not found in ABI`);
     }
 
-    const functionSelector = '0x703270d8';
+    const functionSelector = '0x6a627842';
     
     const encodedParams = this.encodeParameters(func.inputs, params);
     
@@ -168,9 +168,9 @@ export default function NFTMintSection({
         throw new Error('No accounts connected');
       }
 
-      const data = ABIEncoder.encodeFunctionData(NFT_FACTORY_ABI, 'createMyCollection', [handle, amountNum]);
+      const data = ABIEncoder.encodeFunctionData(NFT_FACTORY_ABI, 'mint', [handle, amountNum]);
 
-      onLog(`Function selector: 0x703270d8 (createMyCollection)`, 'info');
+      onLog(`Function selector: 0x6a627842 (mint)`, 'info');
       onLog(`Estimating gas for NFT minting transaction...`, 'info');
 
       let gasEstimate: number | null = null;
