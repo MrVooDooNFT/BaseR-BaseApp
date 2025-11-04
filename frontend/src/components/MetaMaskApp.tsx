@@ -244,7 +244,7 @@ function openWarpcastCompose(url: string) {
   if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
 }
 // ---- BaseR Activity Summary helpers ----
-const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
+
 
 function summarizeActivities(logs: { message: string }[]) {
   let minted = 0, deployed = 0, pings = 0;
