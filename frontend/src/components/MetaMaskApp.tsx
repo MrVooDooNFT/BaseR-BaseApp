@@ -365,7 +365,7 @@ const logEntry: LogEntry = {
       window.open(u.toString(), "_blank", "noopener,noreferrer");
     }
   }
-
+};
 
   const clearLogs = async () => {
     try {
