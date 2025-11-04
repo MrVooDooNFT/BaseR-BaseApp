@@ -324,10 +324,11 @@ const logEntry: LogEntry = {
 
   try {
     // Mini App içindeyse composer içinde embed'i göster
-    await sdk.actions.composeCast({
-      text,
-      embeds: [{ url: "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser" }],
-    });
+await sdk.actions.composeCast({
+  text,
+  embedsOpenGraphUrls: ["https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser"], // ✅ doğru parametre
+});
+
   } catch {
     // Web fallback (embed parametresiyle)
     const u = new URL("https://warpcast.com/~/compose");
