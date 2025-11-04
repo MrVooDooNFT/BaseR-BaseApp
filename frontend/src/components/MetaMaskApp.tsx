@@ -261,7 +261,7 @@ function buildCastFromSummary(sum: { minted: number; deployed: number; clones: n
     MINIAPP_URL, // link en sonda
   ];
 
-  const text = lines.join("\n");
+  const text = lines.join("\n").trimEnd();
   const u = new URL("https://warpcast.com/~/compose");
   u.searchParams.set("text", text);
   return u.toString();
