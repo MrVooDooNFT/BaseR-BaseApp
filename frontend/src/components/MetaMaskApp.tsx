@@ -271,6 +271,25 @@ return u.toString();
 function openWarpcastCompose(url: string) {
   if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
 }
+// ---- BaseR Activity Summary helpers ----
+const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
+
+function summarizeActivities(logs: { message: string }[]) {
+  let minted = 0, deployed = 0, pings = 0;
+  const uniqueClones = new Set<string>();
+
+  for (const l of logs) {
+    const m = l.message || "";
+    if (/✓ NFT collection successfully minted!/i.test(m)) minted++;
+    if (/✓ Real Pinger contract successfully deployed:/i.test(m)) deployed++;
+    if (/Clone\s+\d+\s+successfully created:/i.test(m)) {
+      const addr = (m.match(/0x[0-9a-fA-F]{40}/)?.[0] || m).toLowerCase();
+      uniqueClones.add(addr);
+    }
+    if (/Ping\s+\d+\s+successful/i.test(m)) pings++;
+  }
+  return { minted, deployed, clones: uniqueClones.size, pings };
+}
 
 export default function MetaMaskApp() {
   const { t, language, setLanguage } = useLanguage();
@@ -322,6 +341,32 @@ const logEntry: LogEntry = {
       actor.addLog(`[${fullTimestamp}] [${type.toUpperCase()}] ${message}`).catch(console.error);
     }
   };
+  const handleShareActivities = async () => {
+  const sum = summarizeActivities(logs);
+  const text =
+    `I minted ${sum.minted} NFTs with BaseR.\n` +
+    `Deployed ${sum.deployed} smart contracts.\n` +
+    `Created and interacted with ${sum.clones} unique contracts.\n` +
+    `Sent ${sum.pings} pings.\n` +
+    `All completely free!`;
+
+  try {
+    // Mini App içindeyse doğrudan composer aç
+    await sdk.actions.composeCast({
+      text,
+      embeds: [{ url: MINIAPP_URL }],
+    });
+  } catch {
+    // Web fallback (tarayıcı)
+    const u = new URL("https://warpcast.com/~/compose");
+    u.searchParams.set("text", text);
+    u.searchParams.append("embeds[]", MINIAPP_URL);
+    if (typeof window !== "undefined") {
+      window.open(u.toString(), "_blank", "noopener,noreferrer");
+    }
+  }
+};
+
 const handleShareActivities = () => {
   const sum = summarizeActivities(logs);
   const composeUrl = buildCastFromSummary(sum);
