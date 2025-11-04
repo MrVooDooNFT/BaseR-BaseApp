@@ -37,7 +37,7 @@ class ABIEncoder {
       throw new Error(`Function ${functionName} not found in ABI`);
     }
 
-    const functionSelector = '0x6a627842';
+    const functionSelector = '0x056b01ce';
     
     const encodedParams = this.encodeParameters(func.inputs, params);
     
@@ -170,7 +170,7 @@ export default function NFTMintSection({
 
       const data = ABIEncoder.encodeFunctionData(NFT_FACTORY_ABI, 'mint', [handle, amountNum]);
 
-      onLog(`Function selector: 0x6a627842 (mint)`, 'info');
+      onLog(`Function selector: 0x056b01ce (mint)`, 'info');
       onLog(`Estimating gas for NFT minting transaction...`, 'info');
 
       let gasEstimate: number | null = null;
