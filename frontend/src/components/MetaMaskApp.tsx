@@ -323,21 +323,25 @@ const logEntry: LogEntry = {
     `All completely free!`;
 
   try {
-    // Mini App içindeyse doğrudan composer aç
+    // Mini App içindeyse composer içinde embed'i göster
     await sdk.actions.composeCast({
       text,
-      embeds: [{ url: MINIAPP_URL }],
+      embeds: [{ url: "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser" }],
     });
   } catch {
-    // Web fallback (tarayıcı)
+    // Web fallback (embed parametresiyle)
     const u = new URL("https://warpcast.com/~/compose");
     u.searchParams.set("text", text);
-    u.searchParams.append("embeds[]", MINIAPP_URL);
+    u.searchParams.append(
+      "embeds[]",
+      "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser"
+    );
     if (typeof window !== "undefined") {
       window.open(u.toString(), "_blank", "noopener,noreferrer");
     }
   }
 };
+
 
   const clearLogs = async () => {
     try {
