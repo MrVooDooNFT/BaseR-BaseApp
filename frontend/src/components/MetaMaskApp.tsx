@@ -217,35 +217,7 @@ const PINGER_DEPLOY_OK_RE = /✓ Real Pinger contract successfully deployed: /i;
 const CLONE_OK_RE = /Clone\s+\d+\s+successfully created:/i; // :contentReference[oaicite:2]{index=2}
 const PING_OK_RE = /Ping\s+\d+\s+successful/i; // :contentReference[oaicite:3]{index=3}
 
-function summarizeActivities(logs: { message: string }[]) {
-  let minted = 0;
-  let deployed = 0;
-  const uniqueClones = new Set<string>();
-  let pings = 0;
 
-  for (const l of logs) {
-    const m = l.message || "";
-    if (MINT_OK_RE.test(m)) minted++;
-
-    if (PINGER_DEPLOY_OK_RE.test(m)) deployed++;
-
-    if (CLONE_OK_RE.test(m)) {
-      // Adresi satırdan çekmeye çalış (varsa benzersiz sayalım)
-      // Örn: "Clone 1 successfully created: 0xABC..."
-      const addr = (m.match(/0x[0-9a-fA-F]{40}/)?.[0] || m).toLowerCase();
-      uniqueClones.add(addr);
-    }
-
-    if (PING_OK_RE.test(m)) pings++;
-  }
-
-  return {
-    minted,
-    deployed,
-    clones: uniqueClones.size, // uniq clone sayısı
-    pings,
-  };
-}
 
 const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
 
