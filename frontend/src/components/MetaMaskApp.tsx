@@ -889,9 +889,10 @@ useEffect(() => {
             </Button>
           </div>
           
-          <p className="text-muted-foreground text-lg">
-            {t('header.subtitle')}
-          </p>
+<p className="text-slate-800 dark:text-slate-100 text-lg font-semibold">
+  {t('header.subtitle')}
+</p>
+
         </header>
 
 
