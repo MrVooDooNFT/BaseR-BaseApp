@@ -143,3 +143,17 @@
 .dark .text-muted-foreground {
   color: hsl(var(--muted-foreground)) !important;
 }
+
+header p.text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
+}
+p.text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
+  opacity: 1 !important;
+}
+.dark p.text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
+  opacity: 1 !important;
+}
+
+
