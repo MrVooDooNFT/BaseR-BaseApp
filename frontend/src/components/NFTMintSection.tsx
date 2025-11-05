@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Web3Provider } from '../lib/web3';
 import { useLanguage } from '../contexts/LanguageContext';
 
-const NFT_FACTORY_ADDR = '0x5A5aea5bF11BaaF2f3f420C8e694425aC3590c8C';
+const NFT_FACTORY_ADDR = '0x1d513c531856D16585Eae8A48521e582ce8b74Cb';
 
 const NFT_FACTORY_ABI = [
   {
