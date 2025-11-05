@@ -83,7 +83,7 @@
   }
 }
 
-/* Scrollbar renkleri artık HSL ile uyumlu */
+/* Scrollbar renkleri */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
@@ -101,7 +101,7 @@
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Ethereum-themed gradient backgrounds */
+/* Gradientler */
 .ethereum-gradient {
   background: linear-gradient(135deg, #627eea 0%, #8b5cf6 100%);
 }
@@ -134,4 +134,12 @@
   outline: none;
   border-color: hsl(220 20% 60%);
   box-shadow: 0 0 0 1px hsl(220 20% 60%);
+}
+
+/* 💜 Yeni ekleme: text-muted-foreground */
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.dark .text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
 }
