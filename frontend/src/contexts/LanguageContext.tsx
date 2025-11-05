@@ -14,7 +14,7 @@ const translations = {
   en: {
     // Header
     'header.title': 'BaseR by Mr VooDoo',
-    'header.subtitle': 'Secure contract farming, deployment, and NFT creation on Base',
+    'header.subtitle': 'Easily farm, deploy, and mint NFTs, all free w BaseR! Zero cost!',
     
     // Security Alert
     'security.title': 'Security:',
@@ -101,8 +101,8 @@ const translations = {
     'info.uniqueContractsDesc': 'Unique contract interactions (each clone counts as a unique contract). Avg cost: $0.0002 – $0.0008',
     'info.createNFTs': 'Create NFTs:',
     'info.createNFTsDesc': 'Unique contract and Unique NFT creation, You will be creator and minter. Avg cost: $0.01 – $0.05',
-    'info.costs': 'Costs vary with network congestion. This application never charges or deducts any fees — all costs are only gas fees paid directly to the Base network.',
-    'info.contact': 'For any questions, issues or suggestions, reach out on X:',
+    'info.costs': 'Costs vary with network congestion, so try using BaseR when gas prices are low. The app never charges any fees, only gas paid directly to the Base network.',
+    'info.contact': 'For any questions, issues or suggestions, reach out on Farcaster:',
     
     // Language Selector
     'language.title': 'Language',
@@ -137,7 +137,7 @@ const translations = {
   tr: {
     // Header
     'header.title': 'BaseR by Mr VooDoo',
-    'header.subtitle': 'Base üzerinde güvenli kontrat farming, dağıtım ve NFT oluşturma',
+    'header.subtitle': 'Kolayca farm yapın, sözleşme dağıtın ve NFT mintleyin, BaseR ile hepsi tamamen ücretsiz!',
     
     // Security Alert
     'security.title': 'Güvenlik:',
@@ -224,8 +224,8 @@ const translations = {
     'info.uniqueContractsDesc': 'Benzersiz kontrat etkileşimleri (her clone benzersiz bir kontrat sayılır). Ortalama maliyet: $0.0002 – $0.0008',
     'info.createNFTs': 'NFT Oluştur:',
     'info.createNFTsDesc': 'Benzersiz kontrat ve Benzersiz NFT oluşturma, Siz yaratıcı ve mint eden olacaksınız. Ortalama maliyet: $0.01 – $0.05',
-    'info.costs': 'Maliyetler ağ yoğunluğuna göre değişir. Bu uygulama asla ücret talep etmez veya kesinti yapmaz — tüm maliyetler yalnızca doğrudan Base ağına ödenen gas ücretleridir.',
-    'info.contact': 'Sorular, sorunlar veya öneriler için X\'te iletişime geçin:',
+    'info.costs': 'Maliyetler ağ yoğunluğuna göre değişir, işlemlerinizi ağ yoğun değilken yapınız! Bu uygulama asla ücret talep etmez veya kesinti yapmaz, tüm maliyetler yalnızca doğrudan Base ağına ödenen gas ücretleridir.',
+    'info.contact': 'Sorular, sorunlar veya öneriler için Farcaster\'da iletişime geçin:',
     
     // Language Selector
     'language.title': 'Dil',
