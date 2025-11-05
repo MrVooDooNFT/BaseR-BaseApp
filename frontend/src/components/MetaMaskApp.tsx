@@ -1160,7 +1160,7 @@ useEffect(() => {
     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
     size="lg"
   >
-    {language === 'tr' ? '📣 BaseR aktivitelerini paylaş 🔵' : '📣 Cast your BaseR Activities 🔵'}
+    {language === 'tr' ? '📣 BaseR aktivitelerini paylaş 💫' : '📣 Cast your BaseR Activities 💫'}
   </Button>
 </div>
 
