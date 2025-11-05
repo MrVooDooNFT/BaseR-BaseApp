@@ -251,26 +251,39 @@ function buildCastFromSummary(sum: { minted: number; deployed: number; clones: n
     const iLines: string[] = [];
     const generic: string[] = [];
 
-    if (sum.minted > 0) iLines.push(`I minted ${sum.minted} NFTs with BaseR.`);
-    else generic.push(`Creating and Minting NFTs`);
+    // Pozitif olanlar: sadece ilk satır "I ..." ile, diğerleri düz devam
+    if (sum.minted > 0) iLines.push(`🎨 minted ${sum.minted} NFTs with BaseR.`);
+    else generic.push(`🎨 Creating and Minting NFTs`);
 
-    if (sum.deployed > 0) iLines.push(`I deployed ${sum.deployed} smart contracts.`);
-    else generic.push(`Deploying smart contracts`);
+    if (sum.deployed > 0) iLines.push(`⚙️ deployed ${sum.deployed} smart contracts.`);
+    else generic.push(`⚙️ Deploying smart contracts`);
 
-    if (sum.clones > 0) iLines.push(`I created and interacted with ${sum.clones} unique contracts.`);
-    else generic.push(`Creating and interacting with unique contracts`);
+    if (sum.clones > 0) iLines.push(`🧩 created and interacted with ${sum.clones} unique contracts.`);
+    else generic.push(`🧩 Creating and interacting with unique contracts`);
 
-    if (sum.pings > 0) iLines.push(`I sent ${sum.pings} pings.`);
-    else generic.push(`Sending pings`);
+    if (sum.pings > 0) iLines.push(`📡 sent ${sum.pings} pings.`);
+    else generic.push(`📡 Sending pings`);
 
-    const lines = [...iLines, ...generic, `All completely free!`];
+    if (iLines.length > 0) {
+      iLines[0] = "🎨 " + iLines[0].replace(/^🎨\s*/, ""); // ilk satırın başında 🎨 kalsın
+      iLines[0] = "I " + iLines[0];                       // ve sadece ilk satıra "I" ekle
+    }
+
+    const lines = [
+      "🔵 My BaseR Activities",
+      "",
+      ...iLines,
+      ...generic,
+      "🪩 All completely free!",
+    ];
+
     return lines.join("\n").trimEnd();
   }
 
   const text = buildShareText(sum);
   const u = new URL("https://warpcast.com/~/compose");
   u.searchParams.set("text", text);
-  u.searchParams.append("embeds[]", MINIAPP_URL); // sadece embed parametresi
+  u.searchParams.append("embeds[]", MINIAPP_URL);
   return u.toString();
 }
 
