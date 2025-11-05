@@ -1153,6 +1153,17 @@ useEffect(() => {
                     </Button>
                   )}
                 </div>
+                <div className="mt-3 w-full">
+  <Button
+    onClick={handleShareActivities}
+    disabled={!isConnected || !isOnBaseNetwork}
+    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+    size="lg"
+  >
+    {language === 'tr' ? 'BaseR aktivitelerini paylaş' : 'Cast your BaseR Activities'}
+  </Button>
+</div>
+
               </CardContent>
             </Card>
           </div>
