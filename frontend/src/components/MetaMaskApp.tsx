@@ -246,7 +246,7 @@ if (iLines.length > 0) {
     "",
     ...iLines,
     ...generic,
-    "🪩 All completely free!",
+    "🪩 All free! Zero cost!",
   ];
   return lines.join("\n").trimEnd();
 }
