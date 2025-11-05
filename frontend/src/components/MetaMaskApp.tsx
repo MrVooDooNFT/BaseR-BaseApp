@@ -246,46 +246,45 @@ function buildShareText(sum: { minted: number; deployed: number; clones: number;
 }
 
 // İngilizce metni üretir ve Warpcast compose linkini verir
-function buildCastFromSummary(sum: { minted: number; deployed: number; clones: number; pings: number }) {
-  function buildShareText(sum: { minted: number; deployed: number; clones: number; pings: number }) {
-    const iLines: string[] = [];
-    const generic: string[] = [];
+function buildShareText(sum: { minted: number; deployed: number; clones: number; pings: number }) {
+  const iLines: string[] = [];
+  const generic: string[] = [];
 
-    // Pozitif olanlar: sadece ilk satır "I ..." ile, diğerleri düz devam
-    if (sum.minted > 0) iLines.push(`🎨 minted ${sum.minted} NFTs with BaseR.`);
-    else generic.push(`🎨 Creating and Minting NFTs`);
+  if (sum.minted > 0) iLines.push(`🎨 minted ${sum.minted} ${sum.minted === 1 ? 'NFT' : 'NFTs'} with BaseR.`);
+  else generic.push(`🎨 Creating and Minting NFTs`);
 
-    if (sum.deployed > 0) iLines.push(`⚙️ deployed ${sum.deployed} smart contracts.`);
-    else generic.push(`⚙️ Deploying smart contracts`);
+  if (sum.deployed > 0) iLines.push(`⚙️ deployed ${sum.deployed} ${sum.deployed === 1 ? 'smart contract' : 'smart contracts'}.`);
+  else generic.push(`⚙️ Deploying smart contracts`);
 
-    if (sum.clones > 0) iLines.push(`🧩 created and interacted with ${sum.clones} unique contracts.`);
-    else generic.push(`🧩 Creating and interacting with unique contracts`);
+  if (sum.clones > 0) iLines.push(`🧩 created and interacted with ${sum.clones} ${sum.clones === 1 ? 'unique contract' : 'unique contracts'}.`);
+  else generic.push(`🧩 Creating and interacting with unique contracts`);
 
-    if (sum.pings > 0) iLines.push(`📡 sent ${sum.pings} pings.`);
-    else generic.push(`📡 Sending pings`);
+  if (sum.pings > 0) iLines.push(`📡 sent ${sum.pings} ${sum.pings === 1 ? 'ping' : 'pings'}.`);
+  else generic.push(`📡 Sending pings`);
 
-    if (iLines.length > 0) {
-      iLines[0] = "🎨 " + iLines[0].replace(/^🎨\s*/, ""); // ilk satırın başında 🎨 kalsın
-      iLines[0] = "I " + iLines[0];                       // ve sadece ilk satıra "I" ekle
-    }
-
-    const lines = [
-      "🔵 My BaseR Activities",
-      "",
-      ...iLines,
-      ...generic,
-      "🪩 All completely free!",
-    ];
-
-    return lines.join("\n").trimEnd();
+  if (iLines.length > 0) {
+    iLines[0] = "I " + iLines[0]; // sadece ilk satıra "I"
   }
 
+  const lines = [
+    "🔵 My BaseR Activities",
+    "",
+    ...iLines,
+    ...generic,
+    "💠 All completely free!",
+  ];
+  return lines.join("\n").trimEnd();
+}
+
+// İngilizce metni üretir ve Warpcast compose linkini verir
+function buildCastFromSummary(sum: { minted: number; deployed: number; clones: number; pings: number }) {
   const text = buildShareText(sum);
   const u = new URL("https://warpcast.com/~/compose");
   u.searchParams.set("text", text);
   u.searchParams.append("embeds[]", MINIAPP_URL);
   return u.toString();
 }
+
 
 
 function openWarpcastCompose(url: string) {
@@ -361,9 +360,7 @@ const logEntry: LogEntry = {
       actor.addLog(`[${fullTimestamp}] [${type.toUpperCase()}] ${message}`).catch(console.error);
     }
   };
-const handleShareActivities = async () => {
-  const sum = summarizeActivities(logs);
-  const text = buildShareText(sum);
+4 
 
 
   try {
