@@ -343,8 +343,9 @@ const logEntry: LogEntry = {
       actor.addLog(`[${fullTimestamp}] [${type.toUpperCase()}] ${message}`).catch(console.error);
     }
   };
-const sum = summarizeActivities(logs);
-const text = buildShareText(sum);
+const handleShareActivities = async () => {
+  const sum = summarizeActivities(logs);
+  const text = buildShareText(sum);
 
 
   try {
