@@ -217,56 +217,41 @@ const PINGER_DEPLOY_OK_RE = /✓ Real Pinger contract successfully deployed: /i;
 const CLONE_OK_RE = /Clone\s+\d+\s+successfully created:/i; // :contentReference[oaicite:2]{index=2}
 const PING_OK_RE = /Ping\s+\d+\s+successful/i; // :contentReference[oaicite:3]{index=3}
 
-
-
 const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
+
 function buildShareText(sum: { minted: number; deployed: number; clones: number; pings: number }) {
   const iLines: string[] = [];
   const generic: string[] = [];
 
-  if (sum.minted > 0) iLines.push(`minted ${sum.minted} NFTs with BaseR.`);
-  else generic.push(`Creating and Minting NFTs`);
+  if (sum.minted > 0) iLines.push(`🎨 minted ${sum.minted} ${sum.minted === 1 ? 'NFT' : 'NFTs'} with BaseR.`);
+  else generic.push(`🎨 Creating and Minting NFTs`);
 
-  if (sum.deployed > 0) iLines.push(`deployed ${sum.deployed} smart contracts.`);
-  else generic.push(`Deploying smart contracts`);
+  if (sum.deployed > 0) iLines.push(`⚙️ deployed ${sum.deployed} ${sum.deployed === 1 ? 'smart contract' : 'smart contracts'}.`);
+  else generic.push(`⚙️ Deploying smart contracts`);
 
-  if (sum.clones > 0) iLines.push(`created and interacted with ${sum.clones} unique contracts.`);
-  else generic.push(`Creating and interacting with unique contracts`);
+  if (sum.clones > 0) iLines.push(`🧩 created and interacted with ${sum.clones} ${sum.clones === 1 ? 'unique contract' : 'unique contracts'}.`);
+  else generic.push(`🧩 Creating and interacting with unique contracts`);
 
-  if (sum.pings > 0) iLines.push(`sent ${sum.pings} pings.`);
-  else generic.push(`Sending pings`);
+  if (sum.pings > 0) iLines.push(`📡 sent ${sum.pings} ${sum.pings === 1 ? 'ping' : 'pings'}.`);
+  else generic.push(`📡 Sending pings`);
 
-  // Sadece ilk satırın başına “I” koyuyoruz
+  // Sadece ilk pozitif satıra "I"
   if (iLines.length > 0) {
     iLines[0] = "I " + iLines[0];
   }
 
-  const lines = [...iLines, ...generic, `All completely free!`];
+  const lines = [
+    "🔵 My BaseR Activities",
+    "",
+    ...iLines,
+    ...generic,
+    "💠 All completely free!",
+  ];
   return lines.join("\n").trimEnd();
 }
 
 // İngilizce metni üretir ve Warpcast compose linkini verir
 function buildCastFromSummary(sum: { minted: number; deployed: number; clones: number; pings: number }) {
-  function buildShareText(sum: { minted: number; deployed: number; clones: number; pings: number }) {
-    const iLines: string[] = [];
-    const generic: string[] = [];
-
-    if (sum.minted > 0) iLines.push(`I minted ${sum.minted} NFTs with BaseR.`);
-    else generic.push(`Creating and Minting NFTs`);
-
-    if (sum.deployed > 0) iLines.push(`I deployed ${sum.deployed} smart contracts.`);
-    else generic.push(`Deploying smart contracts`);
-
-    if (sum.clones > 0) iLines.push(`I created and interacted with ${sum.clones} unique contracts.`);
-    else generic.push(`Creating and interacting with unique contracts`);
-
-    if (sum.pings > 0) iLines.push(`I sent ${sum.pings} pings.`);
-    else generic.push(`Sending pings`);
-
-    const lines = [...iLines, ...generic, `All completely free!`];
-    return lines.join("\n").trimEnd();
-  }
-
   const text = buildShareText(sum);
   const u = new URL("https://warpcast.com/~/compose");
   u.searchParams.set("text", text);
@@ -274,12 +259,10 @@ function buildCastFromSummary(sum: { minted: number; deployed: number; clones: n
   return u.toString();
 }
 
-
 function openWarpcastCompose(url: string) {
   if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
 }
 // ---- BaseR Activity Summary helpers ----
-
 
 function summarizeActivities(logs: { message: string }[]) {
   let minted = 0, deployed = 0, pings = 0;
@@ -287,13 +270,13 @@ function summarizeActivities(logs: { message: string }[]) {
 
   for (const l of logs) {
     const m = l.message || "";
-    if (/✓ NFT collection successfully minted!/i.test(m)) minted++;
-    if (/✓ Real Pinger contract successfully deployed:/i.test(m)) deployed++;
-    if (/Clone\s+\d+\s+successfully created:/i.test(m)) {
+    if (MINT_OK_RE.test(m)) minted++;
+    if (PINGER_DEPLOY_OK_RE.test(m)) deployed++;
+    if (CLONE_OK_RE.test(m)) {
       const addr = (m.match(/0x[0-9a-fA-F]{40}/)?.[0] || m).toLowerCase();
       uniqueClones.add(addr);
     }
-    if (/Ping\s+\d+\s+successful/i.test(m)) pings++;
+    if (PING_OK_RE.test(m)) pings++;
   }
   return { minted, deployed, clones: uniqueClones.size, pings };
 }
