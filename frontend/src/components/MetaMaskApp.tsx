@@ -1184,7 +1184,7 @@ useEffect(() => {
         </div>
 
         {/* Wallet Activity */}
-        <div className="mb-6">
+<div className="mb-6 bg-white dark:bg-white">
           <WalletStats 
             account={account}
             isConnected={isConnected}
@@ -1193,7 +1193,7 @@ useEffect(() => {
         </div>
 
         {/* Logs Panel */}
-        <Card className="shadow-lg">
+<Card className="shadow-lg bg-white dark:bg-white">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
