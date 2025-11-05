@@ -236,16 +236,17 @@ function buildShareText(sum: { minted: number; deployed: number; clones: number;
   else generic.push(`📡 Sending pings`);
 
   // Sadece ilk pozitif satıra "I"
-  if (iLines.length > 0) {
-    iLines[0] = "I " + iLines[0];
-  }
+if (iLines.length > 0) {
+  iLines[0] = iLines[0].replace(/^(\S+\s)/, "$1I ");
+}
+
 
   const lines = [
     "🔵 My BaseR Activities",
     "",
     ...iLines,
     ...generic,
-    "💠 All completely free!",
+    "🪩 All completely free!",
   ];
   return lines.join("\n").trimEnd();
 }
