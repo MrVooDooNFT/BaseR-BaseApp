@@ -220,25 +220,55 @@ const PING_OK_RE = /Ping\s+\d+\s+successful/i; // :contentReference[oaicite:3]{i
 
 
 const MINIAPP_URL = "https://farcaster.xyz/miniapps/33jYJVZ6sKoR/baser";
+function buildShareText(sum: { minted: number; deployed: number; clones: number; pings: number }) {
+  const iLines: string[] = [];
+  const generic: string[] = [];
+
+  if (sum.minted > 0) iLines.push(`I minted ${sum.minted} NFTs with BaseR.`);
+  else generic.push(`Creating and Minting NFTs`);
+
+  if (sum.deployed > 0) iLines.push(`I deployed ${sum.deployed} smart contracts.`);
+  else generic.push(`Deploying smart contracts`);
+
+  if (sum.clones > 0) iLines.push(`I created and interacted with ${sum.clones} unique contracts.`);
+  else generic.push(`Creating and interacting with unique contracts`);
+
+  if (sum.pings > 0) iLines.push(`I sent ${sum.pings} pings.`);
+  else generic.push(`Sending pings`);
+
+  const lines = [...iLines, ...generic, `All completely free!`];
+  return lines.join("\n").trimEnd();
+}
 
 // İngilizce metni üretir ve Warpcast compose linkini verir
 function buildCastFromSummary(sum: { minted: number; deployed: number; clones: number; pings: number }) {
-const lines = [
-  `I minted ${sum.minted} NFTs with BaseR.`,
-  `Deployed ${sum.deployed} smart contracts.`,
-  `Created and interacted with ${sum.clones} unique contracts.`,
-  `Sent ${sum.pings} pings.`,
-  `All completely free!`
-];
+  function buildShareText(sum: { minted: number; deployed: number; clones: number; pings: number }) {
+    const iLines: string[] = [];
+    const generic: string[] = [];
 
-const text = lines.join("\n").trimEnd();
+    if (sum.minted > 0) iLines.push(`I minted ${sum.minted} NFTs with BaseR.`);
+    else generic.push(`Creating and Minting NFTs`);
 
-const u = new URL("https://warpcast.com/~/compose");
-u.searchParams.set("text", text);
-u.searchParams.append("embeds[]", MINIAPP_URL); // sadece embed parametresi
-return u.toString();
+    if (sum.deployed > 0) iLines.push(`I deployed ${sum.deployed} smart contracts.`);
+    else generic.push(`Deploying smart contracts`);
 
+    if (sum.clones > 0) iLines.push(`I created and interacted with ${sum.clones} unique contracts.`);
+    else generic.push(`Creating and interacting with unique contracts`);
+
+    if (sum.pings > 0) iLines.push(`I sent ${sum.pings} pings.`);
+    else generic.push(`Sending pings`);
+
+    const lines = [...iLines, ...generic, `All completely free!`];
+    return lines.join("\n").trimEnd();
+  }
+
+  const text = buildShareText(sum);
+  const u = new URL("https://warpcast.com/~/compose");
+  u.searchParams.set("text", text);
+  u.searchParams.append("embeds[]", MINIAPP_URL); // sadece embed parametresi
+  return u.toString();
 }
+
 
 function openWarpcastCompose(url: string) {
   if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
@@ -313,14 +343,9 @@ const logEntry: LogEntry = {
       actor.addLog(`[${fullTimestamp}] [${type.toUpperCase()}] ${message}`).catch(console.error);
     }
   };
-  const handleShareActivities = async () => {
-  const sum = summarizeActivities(logs);
-  const text =
-    `I minted ${sum.minted} NFTs with BaseR.\n` +
-    `Deployed ${sum.deployed} smart contracts.\n` +
-    `Created and interacted with ${sum.clones} unique contracts.\n` +
-    `Sent ${sum.pings} pings.\n` +
-    `All completely free!`;
+const sum = summarizeActivities(logs);
+const text = buildShareText(sum);
+
 
   try {
     // Mini App içindeyse composer içinde embed'i göster
