@@ -51,7 +51,8 @@
     --secondary: 0.25 0.02 240;
     --secondary-foreground: 220 15% 85%;
     --muted: 0.25 0.02 240;
-    --muted-foreground: 220 10% 80%; /* beyazın %5 koyusu */
+    --muted-foreground: 0 0% 100%;
+
     --accent: 0.35 0.02 240;
     --accent-foreground: 220 15% 90%;
     --destructive: 0.70 0.22 15;
