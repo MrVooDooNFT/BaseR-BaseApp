@@ -1214,7 +1214,7 @@ useEffect(() => {
   onClick={handleShareActivities}
   variant="outline"
   size="sm"
-  className="ml-2"
+ className="ml-2 hidden"
 >
   Prepare Cast from Activities
 </Button>
